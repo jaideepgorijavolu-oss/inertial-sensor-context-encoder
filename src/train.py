@@ -1,10 +1,19 @@
+import os
+import json
 import random
 import numpy as np
 import torch
 import torch.nn as nn
 from sklearn.metrics import f1_score
-from dataset import get_dataloaders
-from models import SensorEncoder, DirectClassifier, ContextEmbeddingModel
+from src.dataset import get_dataloaders
+from src.models import SensorEncoder, DirectClassifier, ContextEmbeddingModel
+import os
+import warnings
+from transformers import logging as hf_logging
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+hf_logging.set_verbosity_error()
+warnings.filterwarnings("ignore")
 
 def set_seed(seed: int = 42):
     random.seed(seed)
@@ -46,7 +55,7 @@ def train_pipeline(
     for epoch in range(1, epochs + 1):
         model.train()
         total_loss = 0.0
-        for X, y in train_loader:
+        for batch_idx, (X, y) in enumerate(train_loader):
             X, y = X.to(device), y.to(device)
             optimizer.zero_grad()
             logits = model(X)
@@ -54,6 +63,9 @@ def train_pipeline(
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
+
+            if (batch_idx + 1) % 25 == 0 or (batch_idx + 1) == len(train_loader):
+                print(f"  [Epoch {epoch:02d}] Batch {batch_idx + 1:03d}/{len(train_loader)} | Running Loss: {loss.item():.4f}")
 
         val_f1 = evaluate(model, val_loader, device)
         if val_f1 > best_val_f1:
@@ -64,6 +76,18 @@ def train_pipeline(
 
     if best_state is not None:
         model.load_state_dict(best_state)
+        
+        # Save artifacts
+        os.makedirs("artifacts", exist_ok=True)
+        checkpoint_path = f"artifacts/best_{model.__class__.__name__}.pt"
+        torch.save(best_state, checkpoint_path)
+        
+        # Save training metadata
+        with open(f"artifacts/{model.__class__.__name__}_metadata.json", "w") as f:
+            json.dump({"best_val_macro_f1": best_val_f1, "epochs_trained": epochs}, f)
+            
+        print(f"--> Saved checkpoint to {checkpoint_path}")
+        
     return model
 
 def main():
@@ -98,7 +122,7 @@ def main():
     print(f"Trainable Parameters : {trainable_count:,} (Constraint: < 10,000,000)")
     print(f"Frozen Parameters    : {frozen_count:,}")
 
-    train_pipeline(context_model, train_loader, val_loader, device, epochs=15, lr=5e-4)
+    train_pipeline(context_model, train_loader, val_loader, device, epochs=5, lr=5e-4)
     f1_context = evaluate(context_model, test_loader, device, shuffle=False)
     print(f"--> Condition 2 (Context Model) Test Macro-F1: {f1_context:.4f}")
 

@@ -48,7 +48,10 @@ class ContextEmbeddingModel(nn.Module):
         self.encoder = encoder
 
         self.tokenizer = AutoTokenizer.from_pretrained(llm_model_name)
-        self.llm = AutoModelForCausalLM.from_pretrained(llm_model_name)
+        self.llm = AutoModelForCausalLM.from_pretrained(
+            llm_model_name,
+            torch_dtype=torch.float32
+        )
 
         for param in self.llm.parameters():
             param.requires_grad = False
@@ -69,6 +72,13 @@ class ContextEmbeddingModel(nn.Module):
         self.prefix_ids = self.tokenizer.encode(self.prefix_str, return_tensors="pt", add_special_tokens=True)
         self.suffix_ids = self.tokenizer.encode(self.suffix_str, return_tensors="pt", add_special_tokens=False)
 
+    def train(self, mode: bool = True):
+        """Override train to ensure the frozen LLM backbone stays in eval mode."""
+        super().train(mode)
+        if hasattr(self, 'llm'):
+            self.llm.eval()
+        return self
+
     def forward(self, x: torch.Tensor, shuffle_embeddings: bool = False) -> torch.Tensor:
         B = x.size(0)
         device = x.device
@@ -87,10 +97,14 @@ class ContextEmbeddingModel(nn.Module):
         prefix_embeds = embed_tokens(prefix_ids)
         suffix_embeds = embed_tokens(suffix_ids)
 
+        target_dtype = prefix_embeds.dtype
+        sensor_embed = sensor_embed.to(dtype=target_dtype)
+
         input_embeds = torch.cat([prefix_embeds, sensor_embed, suffix_embeds], dim=1)
 
-        outputs = self.llm(inputs_embeds=input_embeds, output_hidden_states=True)
+        with torch.no_grad():
+            outputs = self.llm(inputs_embeds=input_embeds, output_hidden_states=True)
 
-        final_hidden = outputs.hidden_states[-1][:, -1, :]
+        final_hidden = outputs.hidden_states[-1][:, -1, :].to(dtype=torch.float32)
 
         return self.classification_head(final_hidden)

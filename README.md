@@ -1,13 +1,13 @@
-# Sensor Context Encoder Challenge
+# Sensor Context Encoder
 
-Evaluates the feasibility of converting windowed inertial time-series signals ($128 \times 9$) into continuous context embeddings consumed directly by a frozen language model (`HuggingFaceTB/SmolLM2-360M-Instruct`) without converting sensor readings into text.
+Evaluates the feasibility of projecting windowed inertial time-series telemetry ($128 \times 9$) directly into the token embedding space of a frozen language model (`HuggingFaceTB/SmolLM2-360M-Instruct`) without intermediate string serialization.
 
-## Setup Instructions
+## Setup & Reproduction
 
-1. **Clone & Environment Setup:**
+1. **Environment Setup:**
    ```bash
-   git clone [https://github.com/](https://github.com/)<your-username>/sensor-context-encoder.git
-   cd sensor-context-encoder
+   git clone [https://github.com/](https://github.com/)<your-username>/inertial-sensor-context-encoder.git
+   cd inertial-sensor-context-encoder
    python -m venv venv
-   source venv/bin/activate
+   source venv/bin/activate  # On Windows: .\venv\Scripts\activate
    pip install -r requirements.txt

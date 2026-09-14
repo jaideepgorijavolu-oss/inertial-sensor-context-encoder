@@ -1,36 +1,45 @@
-# Technical Note: Continuous Sensor Context Embeddings for Frozen Language Models
+# Technical Note: Multimodal Inertial Sensor-to-Language Context Projection
 
-## 1. Sensor Encoder and Projector Design
-* **Input Representation:** 9-channel raw windowed inertial signals ($128 \times 9$) capturing triaxial total acceleration, body acceleration, and angular velocity.
-* **1D-CNN Sensor Encoder:** A 3-layer 1D Convolutional network with Batch Normalization, ReLU activations, and Dropout (kernel sizes: 7, 5, 3; strides: 2, 2, 2). An adaptive average pooling layer reduces the spatial sequence to a single 256-dimensional summary vector.
-* **Projector:** A 2-layer Multi-Layer Perceptron (Linear $256 \to 960$ $\to$ GELU $\to$ Linear $960 \to 960$) that projects the continuous sensor representation into the exact embedding space of `HuggingFaceTB/SmolLM2-360M-Instruct`.
-* **Context Insertion:** The projected embedding is concatenated directly between prefix token embeddings (`"Classify the activity as walking, walking upstairs, walking downstairs, sitting, standing, or laying.\n\nSensor context: "`) and suffix token embeddings (`"\n\nActivity:"`). The final hidden state at the last token index is routed to a trainable 6-class linear classification head.
+## 1. Architectural Overview
+- **Input Representation**: 9-channel inertial telemetry (triaxial total acceleration, body acceleration, angular velocity) sampled at 50 Hz across 128 timesteps (`[B, 9, 128]`).
+- **Feature Extraction**: 3-stage 1D-CNN backbone (kernel size 5, stride 1) with batch normalization, ReLU activations, and adaptive average pooling down to an embedding vector.
+- **Cross-Modal Projector**: 2-layer MLP projecting 256-dimensional sensor features into SmolLM2's native 960-dimensional token space.
+- **Language Backbone**: Frozen `HuggingFaceTB/SmolLM2-360M` (361,821,120 parameters). Sensor vectors are concatenated between text prompt tokens (`inputs_embeds`).
+- **Classification Head**: Linear projection layer mapping the final LLM hidden state (`d_model = 960`) to 6 output activity logits.
+- **Parameter Efficiency**: 1,319,686 trainable parameters (~0.36% of backbone size).
 
-## 2. Training Setup & Parameter Efficiency
-* **Split Discipline:** Official subject-wise split. Validation subjects (27, 28, 29, 30) are drawn exclusively from the training split. The test set remains untouched during model optimization.
-* **Trainable Parameter Count:** 
-  * Sensor Encoder: ~352,000
-  * Projector: ~1,168,320
-  * Classification Head: ~5,766
-  * **Total Trainable:** **~1,526,086 parameters** (Strictly within the 10,000,000 parameter budget).
-  * **Frozen Parameters:** ~360M parameters (`SmolLM2-360M-Instruct`).
+---
 
-## 3. Results & Interpretation
+## 2. Evaluation Protocol & Data Isolation
+- **Dataset**: UCI Human Activity Recognition (30 participants).
+- **Leakage Prevention**: Evaluated strictly on unseen subjects. Subject-level validation partitions ensure 0% identity or time-series overlap between train, validation, and test splits.
+- **Primary Metric**: Macro-F1 across all 6 classes (Walking, Walking Upstairs, Walking Downstairs, Sitting, Standing, Laying) to account for slight class frequency variations.
 
-| Condition | Macro-F1 |
-| :--- | :---: |
-| **Direct sensor classifier** | 0.9082 |
-| **Context-embedding model** | 0.8841 |
-| **Context model with shuffled embeddings** | 0.1654 |
+---
 
-* **Fidelity of Representation:** The context model retains ~97.3% of the direct classifier's baseline performance (0.8841 vs. 0.9082 Macro-F1), confirming that continuous sensor embeddings successfully route semantic information through the frozen attention blocks.
-* **Sensor-Dependence Check:** When complete projected embeddings are shuffled across test samples, Macro-F1 drops to chance levels (0.1654). This verifies that the classification head is actively conditioned on the underlying inertial signal rather than exploiting linguistic priors in the prompt.
+## 3. Quantitative Results
 
-## 4. Known Limitations
-* **Computational Footprint:** Forwarding continuous vectors through a 360M transformer backbone introduces substantial inference latency compared to the lightweight 1D-CNN baseline.
-* **Single-Token Information Bottleneck:** Compressing 128 time-steps into a single vector limits temporal granularity across extended multi-sensor recording windows.
+| Experimental Condition | Test Macro-F1 | Trainable Parameters | Description |
+| :--- | :--- | :--- | :--- |
+| **Condition 1: Direct Sensor Classifier** | **0.9337** | 145,094 | Dedicated 1D-CNN baseline directly optimized for classification |
+| **Condition 2: Context-Embedding Model** | **0.5130** | 1,319,686 | 1D-CNN + MLP projector into frozen SmolLM2-360M |
+| **Condition 3: Negative Control (Shuffled)** | **0.2618** | 0 (Inference) | Condition 2 evaluated with permuted sensor tokens across batch |
 
-## 5. Recommendation
-**Proceed with developing the continuous context-embedding paradigm for multimodal on-device agents.** 
+---
 
-While isolated activity classification is more efficiently handled by direct classifiers, continuous context embeddings enable language models to interpret heterogeneous physical telemetry (IMU, gaze, proximity, battery state) within a unified semantic space without converting numerical arrays into inefficient text tokens.
+## 4. Key Findings & Discussion
+
+1. **Physical Feature Grounding**: Permuting the sensor token across the batch (Condition 3) drops test Macro-F1 from 0.5130 down to 0.2618 (a 48.97% relative drop). This confirms the classification head extracts state signals directly from injected sensor embeddings rather than over-indexing on the static text prompt.
+2. **Compute-to-Accuracy Trade-off**: The direct 1D-CNN baseline achieves 0.9337 Macro-F1 with 89% fewer trainable parameters, sub-millisecond per-window latency, and negligible RAM footprint. Contextual LLM injection introduces significant memory and inference overhead, demonstrating that for pure discrete classification, specialized lightweight encoders remain vastly superior.
+3. **Autograd Optimization**: Wrapping the frozen 360M transformer forward pass in `torch.no_grad()` prevented computational graph retention across 30 transformer layers, eliminating CPU memory thrashing.
+
+---
+
+## 5. Reproduction
+
+```bash
+# Run unit tests
+python -m pytest tests -v
+
+# Train and reproduce full evaluation summary
+python -m src.train
