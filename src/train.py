@@ -249,9 +249,9 @@ def main(argv=None):
     summary, table = summarize(per_seed, args)
 
     os.makedirs(args.out_dir, exist_ok=True)
-    with open(os.path.join(args.out_dir, "results.json"), "w") as f:
+    with open(os.path.join(args.out_dir, "results.json"), "w", encoding="utf-8") as f:
         json.dump({"config": vars(args), "summary": summary, "per_seed": per_seed}, f, indent=2)
-    with open(os.path.join(args.out_dir, "results.md"), "w") as f:
+    with open(os.path.join(args.out_dir, "results.md"), "w", encoding="utf-8") as f:
         f.write(table + "\n")
     print("\n" + table)
     print(f"\nSaved {args.out_dir}/results.json and {args.out_dir}/results.md")
