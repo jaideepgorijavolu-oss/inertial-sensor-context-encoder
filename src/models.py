@@ -1,10 +1,21 @@
 import torch
 import torch.nn as nn
-from transformers import AutoTokenizer, AutoModelForCausalLM
+
+DEFAULT_LLM = "HuggingFaceTB/SmolLM2-360M-Instruct"
+
+PROMPT_PREFIX = (
+    "Classify the activity as walking, walking upstairs, walking downstairs, "
+    "sitting, standing, or laying.\n\nSensor context: "
+)
+PROMPT_SUFFIX = "\n\nActivity:"
+
 
 class SensorEncoder(nn.Module):
+    """1D-CNN over a [B, T, C] inertial window -> [B, hidden_dim] feature vector."""
+
     def __init__(self, in_channels: int = 9, hidden_dim: int = 256):
         super().__init__()
+        self.hidden_dim = hidden_dim
         self.feature_extractor = nn.Sequential(
             nn.Conv1d(in_channels, 64, kernel_size=7, stride=2, padding=3),
             nn.BatchNorm1d(64),
@@ -23,88 +34,134 @@ class SensorEncoder(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # [B, T, C] -> [B, C, T] for Conv1d
         x = x.transpose(1, 2)
-        feat = self.feature_extractor(x).squeeze(-1)
-        return feat
+        return self.feature_extractor(x).squeeze(-1)
+
 
 class DirectClassifier(nn.Module):
-    def __init__(self, encoder: nn.Module, num_classes: int = 6, hidden_dim: int = 256):
+    """Condition 1: encoder + linear head."""
+
+    def __init__(self, encoder: SensorEncoder, num_classes: int = 6):
         super().__init__()
         self.encoder = encoder
-        self.classifier = nn.Linear(hidden_dim, num_classes)
+        self.classifier = nn.Linear(encoder.hidden_dim, num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        feat = self.encoder(x)
-        return self.classifier(feat)
+        return self.classifier(self.encoder(x))
+
+
+def make_projector(in_dim: int, out_dim: int) -> nn.Sequential:
+    return nn.Sequential(
+        nn.Linear(in_dim, out_dim),
+        nn.GELU(),
+        nn.Linear(out_dim, out_dim)
+    )
+
+
+class MatchedCapacityClassifier(nn.Module):
+    """
+    Ablation: the exact trainable stack of the context model (encoder -> projector -> head)
+    with the frozen LLM removed. Any gap between this and ContextEmbeddingModel is
+    attributable to the LLM itself, not to the extra projector parameters.
+    """
+
+    def __init__(self, encoder: SensorEncoder, llm_dim: int = 960, num_classes: int = 6):
+        super().__init__()
+        self.encoder = encoder
+        self.projector = make_projector(encoder.hidden_dim, llm_dim)
+        self.classification_head = nn.Linear(llm_dim, num_classes)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.classification_head(self.projector(self.encoder(x)))
+
 
 class ContextEmbeddingModel(nn.Module):
+    """
+    Condition 2: the sensor window is encoded, projected into the LLM's token-embedding
+    space, and spliced between prompt tokens as a single soft token. The LLM is frozen
+    (requires_grad=False) but gradients still flow *through* it into the projector and
+    encoder; the classification head reads the last position's final hidden state.
+    """
+
     def __init__(
         self,
-        encoder: nn.Module,
-        llm_model_name: str = "HuggingFaceTB/SmolLM2-360M-Instruct",
-        num_classes: int = 6
+        encoder: SensorEncoder,
+        llm: nn.Module,
+        prefix_ids: torch.Tensor,
+        suffix_ids: torch.Tensor,
+        num_classes: int = 6,
     ):
         super().__init__()
         self.encoder = encoder
-
-        self.tokenizer = AutoTokenizer.from_pretrained(llm_model_name)
-        self.llm = AutoModelForCausalLM.from_pretrained(
-            llm_model_name,
-            torch_dtype=torch.float32
-        )
-
+        # Base transformer (no LM head): we only need hidden states, and the LM head
+        # would compute vocab-sized logits for every position for nothing.
+        self.llm = llm
         for param in self.llm.parameters():
             param.requires_grad = False
 
         llm_dim = self.llm.config.hidden_size
-
-        self.projector = nn.Sequential(
-            nn.Linear(256, llm_dim),
-            nn.GELU(),
-            nn.Linear(llm_dim, llm_dim)
-        )
-
+        self.projector = make_projector(encoder.hidden_dim, llm_dim)
         self.classification_head = nn.Linear(llm_dim, num_classes)
 
-        self.prefix_str = "Classify the activity as walking, walking upstairs, walking downstairs, sitting, standing, or laying.\n\nSensor context: "
-        self.suffix_str = "\n\nActivity:"
+        # Buffers move with .to(device); non-persistent so checkpoints stay small.
+        self.register_buffer("prefix_ids", prefix_ids.view(1, -1).long(), persistent=False)
+        self.register_buffer("suffix_ids", suffix_ids.view(1, -1).long(), persistent=False)
 
-        self.prefix_ids = self.tokenizer.encode(self.prefix_str, return_tensors="pt", add_special_tokens=True)
-        self.suffix_ids = self.tokenizer.encode(self.suffix_str, return_tensors="pt", add_special_tokens=False)
+    @classmethod
+    def from_pretrained(
+        cls,
+        encoder: SensorEncoder,
+        llm_model_name: str = DEFAULT_LLM,
+        num_classes: int = 6,
+        gradient_checkpointing: bool = False,
+    ) -> "ContextEmbeddingModel":
+        from transformers import AutoModel, AutoTokenizer
+
+        tokenizer = AutoTokenizer.from_pretrained(llm_model_name)
+        llm = AutoModel.from_pretrained(llm_model_name, torch_dtype=torch.float32)
+        if gradient_checkpointing:
+            llm.gradient_checkpointing_enable()
+        prefix_ids = tokenizer.encode(PROMPT_PREFIX, return_tensors="pt", add_special_tokens=True)
+        suffix_ids = tokenizer.encode(PROMPT_SUFFIX, return_tensors="pt", add_special_tokens=False)
+        return cls(encoder, llm, prefix_ids, suffix_ids, num_classes)
 
     def train(self, mode: bool = True):
-        """Override train to ensure the frozen LLM backbone stays in eval mode."""
+        """Keep the frozen backbone in eval mode (no dropout) even while training."""
         super().train(mode)
-        if hasattr(self, 'llm'):
-            self.llm.eval()
+        self.llm.eval()
         return self
 
     def forward(self, x: torch.Tensor, shuffle_embeddings: bool = False) -> torch.Tensor:
         B = x.size(0)
-        device = x.device
-
-        sensor_feats = self.encoder(x)
-        sensor_embed = self.projector(sensor_feats).unsqueeze(1)
+        sensor_embed = self.projector(self.encoder(x)).unsqueeze(1)
 
         if shuffle_embeddings:
-            perm = torch.randperm(B, device=device)
-            sensor_embed = sensor_embed[perm]
+            # Negative control: pair every prompt with another sample's sensor token.
+            sensor_embed = sensor_embed[torch.randperm(B, device=x.device)]
 
         embed_tokens = self.llm.get_input_embeddings()
-        prefix_ids = self.prefix_ids.to(device).expand(B, -1)
-        suffix_ids = self.suffix_ids.to(device).expand(B, -1)
+        prefix_embeds = embed_tokens(self.prefix_ids.expand(B, -1))
+        suffix_embeds = embed_tokens(self.suffix_ids.expand(B, -1))
+        sensor_embed = sensor_embed.to(dtype=prefix_embeds.dtype)
 
-        prefix_embeds = embed_tokens(prefix_ids)
-        suffix_embeds = embed_tokens(suffix_ids)
+        inputs_embeds = torch.cat([prefix_embeds, sensor_embed, suffix_embeds], dim=1)
 
-        target_dtype = prefix_embeds.dtype
-        sensor_embed = sensor_embed.to(dtype=target_dtype)
+        # No torch.no_grad() here: it would detach the output from the sensor embedding,
+        # so the encoder/projector would never receive gradients. The frozen weights
+        # already have requires_grad=False, so no gradients are stored for them.
+        hidden = self.llm(inputs_embeds=inputs_embeds, use_cache=False).last_hidden_state
+        return self.classification_head(hidden[:, -1, :].float())
 
-        input_embeds = torch.cat([prefix_embeds, sensor_embed, suffix_embeds], dim=1)
 
-        with torch.no_grad():
-            outputs = self.llm(inputs_embeds=input_embeds, output_hidden_states=True)
-
-        final_hidden = outputs.hidden_states[-1][:, -1, :].to(dtype=torch.float32)
-
-        return self.classification_head(final_hidden)
+def trainable_state_dict(model: nn.Module) -> dict:
+    """
+    Detached *copies* of everything except frozen LLM weights. Copying matters: on CPU,
+    tensor.cpu() returns the same storage, so a "best" snapshot taken that way silently
+    tracks the live weights and ends up equal to the last epoch.
+    """
+    return {
+        k: v.detach().to("cpu", copy=True)
+        for k, v in model.state_dict().items()
+        if not k.startswith("llm.")
+    }

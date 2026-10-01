@@ -2,46 +2,68 @@
 
 ## 1. Architectural Overview
 
-* **Input Representation**: 9-channel inertial telemetry (triaxial total acceleration, body acceleration, angular velocity) sampled at 50 Hz across 128 timesteps (`[B, 9, 128]`).
-* **Feature Extraction**: 3-stage 1D-CNN backbone (kernel size 5, stride 1) with batch normalization, ReLU activations, and adaptive average pooling down to an embedding vector.
-* **Cross-Modal Projector**: 2-layer MLP projecting 256-dimensional sensor features into SmolLM2's native 960-dimensional token space.
-* **Language Backbone**: Frozen `HuggingFaceTB/SmolLM2-360M` (361,821,120 parameters). Sensor vectors are concatenated between text prompt tokens (`inputs_embeds`).
-* **Classification Head**: Linear projection layer mapping the final LLM hidden state (`d_model = 960`) to 6 output activity logits.
-* **Parameter Efficiency**: 1,319,686 trainable parameters (~0.36% of backbone size).
+* **Input Representation**: 9-channel inertial telemetry (triaxial total acceleration, body acceleration, angular velocity) sampled at 50 Hz across 128 timesteps (`[B, 128, 9]`), z-scored per channel with statistics from the training subjects only.
+* **Feature Extraction**: 3-stage 1D-CNN (kernels 7/5/3, stride 2, channels 64/128/256) with batch normalization, ReLU, dropout, and global average pooling to a 256-d vector.
+* **Cross-Modal Projector**: 2-layer MLP (Linear → GELU → Linear) projecting 256-d sensor features into SmolLM2's 960-d token-embedding space.
+* **Language Backbone**: Frozen `HuggingFaceTB/SmolLM2-360M-Instruct` base transformer (no LM head). The projected sensor vector is spliced as one soft token between prompt-prefix and prompt-suffix token embeddings (`inputs_embeds`).
+* **Classification Head**: Linear layer on the final-layer hidden state at the last position (`d_model = 960`) → 6 activity logits.
+* **Gradient path**: backbone weights have `requires_grad=False`, but the forward pass is *not* wrapped in `torch.no_grad()`, so the loss backpropagates through the frozen transformer into the projector and encoder. (An earlier version wrapped the backbone in `no_grad`, which detached the sensor token from the loss and left the encoder and projector at their random initialization; `tests/test_context_model.py` guards against this regression.)
 
 ---
 
 ## 2. Evaluation Protocol & Data Isolation
 
 * **Dataset**: UCI Human Activity Recognition (30 participants).
-* **Leakage Prevention**: Evaluated strictly on unseen subjects. Subject-level validation partitions ensure 0% identity or time-series overlap between train, validation, and test splits.
-* **Primary Metric**: Macro-F1 across all 6 classes (Walking, Walking Upstairs, Walking Downstairs, Sitting, Standing, Laying) to account for slight class frequency variations.
+* **Leakage Prevention**: Subject-disjoint splits. Validation = training subjects 27–30; test = the official UCI test subjects. Disjointness is asserted at load time and in the test suite. Normalization statistics come from training subjects only.
+* **Model selection**: best validation macro-F1 checkpoint (a true copy of the weights, not a reference to the live parameters).
+* **Budget parity**: all conditions train for the same number of epochs by default (AdamW, cosine LR schedule, gradient clipping at 1.0).
+* **Repetition**: 3 seeds by default; results reported as mean ± sample std.
+* **Primary Metric**: Macro-F1 across the 6 classes (Walking, Walking Upstairs, Walking Downstairs, Sitting, Standing, Laying). Per-class F1 and confusion matrices are saved to `artifacts/results.json`.
 
 ---
 
-## 3. Quantitative Results
+## 3. Conditions
 
-| Experimental Condition | Test Macro-F1 | Trainable Parameters | Description |
-| :--- | :--- | :--- | :--- |
-| **Condition 1: Direct Sensor Classifier** | **0.9337** | 145,094 | Dedicated 1D-CNN baseline directly optimized for classification |
-| **Condition 2: Context-Embedding Model** | **0.5130** | 1,319,686 | 1D-CNN + MLP projector into frozen SmolLM2-360M |
-| **Condition 3: Negative Control (Shuffled)** | **0.2618** | 0 (Inference) | Condition 2 evaluated with permuted sensor tokens across batch |
-
----
-
-## 4. Key Findings & Discussion
-
-* **Physical Feature Grounding**: Permuting the sensor token across the batch (Condition 3) drops test Macro-F1 from 0.5130 down to 0.2618 (a 48.97% relative drop). This confirms the classification head extracts state signals directly from injected sensor embeddings rather than over-indexing on the static text prompt.
-* **Compute-to-Accuracy Trade-off**: The direct 1D-CNN baseline achieves 0.9337 Macro-F1 with 89% fewer trainable parameters, sub-millisecond per-window latency, and negligible RAM footprint. Contextual LLM injection introduces significant memory and inference overhead, demonstrating that for pure discrete classification, specialized lightweight encoders remain vastly superior.
-* **Autograd Optimization**: Wrapping the frozen 360M transformer forward pass in `torch.no_grad()` prevented computational graph retention across 30 transformer layers, eliminating CPU memory thrashing.
+| Condition | Purpose |
+| :--- | :--- |
+| **Direct sensor classifier** | Task-specific CNN baseline |
+| **Context-embedding model** | CNN + projector into frozen SmolLM2-360M |
+| **Matched-capacity ablation** | Identical trainable stack (CNN + projector + head) without the LLM, separating the LLM's contribution from the extra parameters |
+| **Shuffled negative control** | Context model with sensor tokens permuted across the batch (averaged over 5 permutations); tests sensor dependence |
 
 ---
 
-## 5. Reproduction
+## 4. Results
+
+Run `python -m src.train`; the table below is generated verbatim in `artifacts/results.md`.
+
+> **Note:** results from the earlier version of this repo (Direct 0.9337, Context 0.5130,
+> Shuffled 0.2618 macro-F1, single seed) were produced while the encoder/projector of the
+> context model received no gradients and with an unequal epoch budget (15 vs 5). They
+> are superseded and should be regenerated with the current code.
+
+| Condition | Test Macro-F1 (mean ± std) | Trainable params | Latency ms/window |
+| :--- | :--- | ---: | ---: |
+| Direct sensor classifier | _rerun_ | _rerun_ | _rerun_ |
+| Matched-capacity, no LLM (ablation) | _rerun_ | _rerun_ | _rerun_ |
+| Context-embedding model (frozen LLM) | _rerun_ | _rerun_ | _rerun_ |
+| Context model, shuffled sensor tokens (control) | _rerun_ | 0 | — |
+
+---
+
+## 5. What to look for
+
+* **Context vs. matched ablation**: the cleanest test of whether the frozen LLM adds value; both have the same trainable parameters, so any difference comes from the backbone.
+* **Context vs. shuffled control**: a large drop confirms predictions are driven by the sensor token rather than the static prompt.
+* **Direct vs. context**: the accuracy-per-compute trade-off. Latency per window is reported for each condition; the 360M-parameter backbone dominates inference cost.
+* **Per-class F1**: Sitting vs. Standing is the known hard pair on UCI HAR; check the confusion matrices before attributing gains to the LLM.
+
+---
+
+## 6. Reproduction
 
 ```bash
-# Run unit tests
+python -m src.download_data
 python -m pytest tests -v
-
-# Train and reproduce full evaluation summary
 python -m src.train
+```
