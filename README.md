@@ -2,9 +2,10 @@
 
 Can a frozen language model reason over raw inertial telemetry if the signal is injected
 directly into its token-embedding space, with no text serialization? This repo projects
-128×9 IMU windows (UCI HAR) into `HuggingFaceTB/SmolLM2-360M-Instruct` as a single soft
-token and compares it against a dedicated CNN classifier, a parameter-matched no-LLM
-ablation, and a shuffled-token negative control. See [TECHNICAL_NOTE.md](TECHNICAL_NOTE.md).
+128×9 IMU windows (UCI HAR) into `HuggingFaceTB/SmolLM2-360M-Instruct` as soft tokens
+(one pooled token or eight temporal tokens, frozen or LoRA-adapted backbone) and compares
+them against a dedicated CNN classifier, a parameter-matched no-LLM ablation, and
+shuffled-token negative controls. See [TECHNICAL_NOTE.md](TECHNICAL_NOTE.md).
 
 ## Experimental conditions
 
