@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 DEFAULT_LLM = "HuggingFaceTB/SmolLM2-360M-Instruct"
 
@@ -37,6 +38,11 @@ class SensorEncoder(nn.Module):
         # [B, T, C] -> [B, C, T] for Conv1d
         x = x.transpose(1, 2)
         return self.feature_extractor(x).squeeze(-1)
+
+    def forward_sequence(self, x: torch.Tensor, num_tokens: int) -> torch.Tensor:
+        """[B, T, C] -> [B, num_tokens, hidden_dim]: conv features pooled into temporal segments."""
+        feats = self.feature_extractor[:-1](x.transpose(1, 2))  # everything but the global pool
+        return F.adaptive_avg_pool1d(feats, num_tokens).transpose(1, 2)
 
 
 class DirectClassifier(nn.Module):
@@ -78,10 +84,12 @@ class MatchedCapacityClassifier(nn.Module):
 
 class ContextEmbeddingModel(nn.Module):
     """
-    Condition 2: the sensor window is encoded, projected into the LLM's token-embedding
-    space, and spliced between prompt tokens as a single soft token. The LLM is frozen
-    (requires_grad=False) but gradients still flow *through* it into the projector and
-    encoder; the classification head reads the last position's final hidden state.
+    The sensor window is encoded, projected into the LLM's token-embedding space, and
+    spliced between prompt tokens as `num_sensor_tokens` soft tokens (1 = one pooled
+    summary; >1 = consecutive temporal segments of the window). The LLM is frozen
+    (requires_grad=False) except for any LoRA adapter weights, but gradients always flow
+    *through* it into the projector and encoder; the classification head reads the last
+    position's final hidden state.
     """
 
     def __init__(
@@ -91,14 +99,16 @@ class ContextEmbeddingModel(nn.Module):
         prefix_ids: torch.Tensor,
         suffix_ids: torch.Tensor,
         num_classes: int = 6,
+        num_sensor_tokens: int = 1,
     ):
         super().__init__()
         self.encoder = encoder
+        self.num_sensor_tokens = num_sensor_tokens
         # Base transformer (no LM head): we only need hidden states, and the LM head
         # would compute vocab-sized logits for every position for nothing.
         self.llm = llm
-        for param in self.llm.parameters():
-            param.requires_grad = False
+        for name, param in self.llm.named_parameters():
+            param.requires_grad = "lora_" in name
 
         llm_dim = self.llm.config.hidden_size
         self.projector = make_projector(encoder.hidden_dim, llm_dim)
@@ -115,16 +125,20 @@ class ContextEmbeddingModel(nn.Module):
         llm_model_name: str = DEFAULT_LLM,
         num_classes: int = 6,
         gradient_checkpointing: bool = False,
+        num_sensor_tokens: int = 1,
+        lora_r: int = 0,
     ) -> "ContextEmbeddingModel":
         from transformers import AutoModel, AutoTokenizer
 
         tokenizer = AutoTokenizer.from_pretrained(llm_model_name)
-        llm = AutoModel.from_pretrained(llm_model_name, torch_dtype=torch.float32)
+        llm = AutoModel.from_pretrained(llm_model_name, dtype=torch.float32)
+        if lora_r:
+            llm = add_lora(llm, lora_r)
         if gradient_checkpointing:
             llm.gradient_checkpointing_enable()
         prefix_ids = tokenizer.encode(PROMPT_PREFIX, return_tensors="pt", add_special_tokens=True)
         suffix_ids = tokenizer.encode(PROMPT_SUFFIX, return_tensors="pt", add_special_tokens=False)
-        return cls(encoder, llm, prefix_ids, suffix_ids, num_classes)
+        return cls(encoder, llm, prefix_ids, suffix_ids, num_classes, num_sensor_tokens)
 
     def train(self, mode: bool = True):
         """Keep the frozen backbone in eval mode (no dropout) even while training."""
@@ -134,7 +148,11 @@ class ContextEmbeddingModel(nn.Module):
 
     def forward(self, x: torch.Tensor, shuffle_embeddings: bool = False) -> torch.Tensor:
         B = x.size(0)
-        sensor_embed = self.projector(self.encoder(x)).unsqueeze(1)
+        if self.num_sensor_tokens == 1:
+            sensor_feats = self.encoder(x).unsqueeze(1)  # [B, 1, H]
+        else:
+            sensor_feats = self.encoder.forward_sequence(x, self.num_sensor_tokens)  # [B, K, H]
+        sensor_embed = self.projector(sensor_feats)  # [B, K, D]
 
         if shuffle_embeddings:
             # Negative control: pair every prompt with another sample's sensor token.
@@ -154,14 +172,22 @@ class ContextEmbeddingModel(nn.Module):
         return self.classification_head(hidden[:, -1, :].float())
 
 
+def add_lora(llm: nn.Module, r: int) -> nn.Module:
+    """Inject rank-r LoRA adapters into the attention q/v projections (in place)."""
+    from peft import LoraConfig, inject_adapter_in_model
+
+    config = LoraConfig(r=r, lora_alpha=2 * r, lora_dropout=0.0, target_modules=["q_proj", "v_proj"])
+    return inject_adapter_in_model(config, llm)
+
+
 def trainable_state_dict(model: nn.Module) -> dict:
     """
-    Detached *copies* of everything except frozen LLM weights. Copying matters: on CPU,
-    tensor.cpu() returns the same storage, so a "best" snapshot taken that way silently
-    tracks the live weights and ends up equal to the last epoch.
+    Detached *copies* of everything except frozen LLM weights (LoRA adapters are kept).
+    Copying matters: on CPU, tensor.cpu() returns the same storage, so a "best" snapshot
+    taken that way silently tracks the live weights and ends up equal to the last epoch.
     """
     return {
         k: v.detach().to("cpu", copy=True)
         for k, v in model.state_dict().items()
-        if not k.startswith("llm.")
+        if not k.startswith("llm.") or "lora_" in k
     }

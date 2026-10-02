@@ -21,13 +21,31 @@ from src.models import (
 
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
-CONDITIONS = ("direct", "matched", "context")
+CONDITIONS = ("direct", "matched", "context", "context_mt", "context_lora")
+CONTEXT_CONDITIONS = ("context", "context_mt", "context_lora")
 CONDITION_LABELS = {
     "direct": "Direct sensor classifier",
     "matched": "Matched-capacity, no LLM (ablation)",
-    "context": "Context-embedding model (frozen LLM)",
-    "shuffled": "Context model, shuffled sensor tokens (control)",
+    "context": "Context model, 1 sensor token (frozen LLM)",
+    "context_mt": "Context model, multi-token (frozen LLM)",
+    "context_lora": "Context model, multi-token + LoRA",
+    "shuffled": "Context model, 1 token, shuffled (control)",
+    "context_mt_shuffled": "Context model, multi-token, shuffled (control)",
+    "context_lora_shuffled": "Context model, multi-token + LoRA, shuffled (control)",
 }
+
+
+def shuffled_key(cond: str) -> str:
+    return "shuffled" if cond == "context" else f"{cond}_shuffled"
+
+
+def condition_settings(cond: str, args) -> dict:
+    """Condition-specific settings; saved results are reused only if these match."""
+    if cond == "context_mt":
+        return {"sensor_tokens": args.sensor_tokens}
+    if cond == "context_lora":
+        return {"sensor_tokens": args.sensor_tokens, "lora_r": args.lora_r}
+    return {}
 
 
 def set_seed(seed: int):
@@ -138,27 +156,34 @@ def build(condition: str, args) -> nn.Module:
         return DirectClassifier(encoder)
     if condition == "matched":
         return MatchedCapacityClassifier(encoder, llm_dim=args.llm_dim)
+    settings = condition_settings(condition, args)
     return ContextEmbeddingModel.from_pretrained(
-        encoder, args.llm, gradient_checkpointing=args.gradient_checkpointing
+        encoder, args.llm, gradient_checkpointing=args.gradient_checkpointing,
+        num_sensor_tokens=settings.get("sensor_tokens", 1), lora_r=settings.get("lora_r", 0),
     )
 
 
-def run_seed(seed: int, args, device) -> dict:
+def run_seed(seed: int, args, device, existing: dict = None, on_condition_done=None) -> dict:
+    """Train/evaluate every condition for one seed, skipping conditions already in `existing`."""
+    results = dict(existing or {})
+    todo = [c for c in args.conditions if c not in results]
+    if not todo:
+        return results
     set_seed(seed)
     train_loader, val_loader, test_loader, scaler = get_dataloaders(
         data_dir=args.data_dir, batch_size=args.batch_size, val_subjects=DEFAULT_VAL_SUBJECTS,
         standardize=not args.no_standardize, seed=seed,
     )
     out_dir = os.path.join(args.out_dir, f"seed{seed}")
-    results = {}
-    for cond in args.conditions:
+    for cond in todo:
         print(f"\n=== seed {seed} | {CONDITION_LABELS[cond]} ===")
         set_seed(seed)
         model = build(cond, args).to(device)
         trainable, frozen = count_params(model)
         print(f"  trainable params {trainable:,} | frozen params {frozen:,}")
-        epochs = args.context_epochs if cond == "context" else args.epochs
-        lr = args.context_lr if cond == "context" else args.lr
+        is_context = cond in CONTEXT_CONDITIONS
+        epochs = args.context_epochs if is_context else args.epochs
+        lr = args.context_lr if is_context else args.lr
         train_info = train_model(model, train_loader, val_loader, device, epochs, lr, cond, out_dir)
 
         results[cond] = {
@@ -166,21 +191,26 @@ def run_seed(seed: int, args, device) -> dict:
             "trainable_params": trainable,
             "frozen_params": frozen,
             "latency_ms": latency_ms_per_window(model, device),
+            "settings": condition_settings(cond, args),
             **train_info,
         }
         print(f"  --> test macro-F1 {results[cond]['macro_f1']:.4f}")
 
-        if cond == "context":
+        if is_context:
             # Average over several random permutations; a single permutation is noisy.
             torch.manual_seed(seed)
             shuffled = [full_metrics(model, test_loader, device, shuffle=True) for _ in range(args.shuffle_repeats)]
-            results["shuffled"] = {
+            results[shuffled_key(cond)] = {
                 "macro_f1": float(np.mean([s["macro_f1"] for s in shuffled])),
                 "accuracy": float(np.mean([s["accuracy"] for s in shuffled])),
                 "trainable_params": 0,
             }
-            print(f"  --> shuffled-control test macro-F1 {results['shuffled']['macro_f1']:.4f}")
+            print(f"  --> shuffled-control test macro-F1 {results[shuffled_key(cond)]['macro_f1']:.4f}")
         del model
+        if on_condition_done is not None:
+            on_condition_done(results)
+        if device.type == "cuda":
+            torch.cuda.empty_cache()
 
     if scaler is not None:
         results["standardizer"] = scaler.state_dict()
@@ -190,7 +220,8 @@ def run_seed(seed: int, args, device) -> dict:
 def summarize(per_seed: dict, args) -> tuple:
     rows = []
     summary = {}
-    for cond in [*args.conditions, *(["shuffled"] if "context" in args.conditions else [])]:
+    ordered = [*args.conditions, *(shuffled_key(c) for c in args.conditions if c in CONTEXT_CONDITIONS)]
+    for cond in ordered:
         f1s = [per_seed[s][cond]["macro_f1"] for s in per_seed]
         first = per_seed[next(iter(per_seed))][cond]
         summary[cond] = {
@@ -208,6 +239,7 @@ def summarize(per_seed: dict, args) -> tuple:
         )
     table = "\n".join([
         f"Seeds: {list(per_seed)} | epochs: {args.epochs} (context: {args.context_epochs}) | "
+        f"sensor tokens (multi-token): {args.sensor_tokens} | LoRA rank: {args.lora_r} | "
         f"standardized inputs: {not args.no_standardize} | device: {args.device_name}",
         "",
         "| Condition | Test Macro-F1 (mean ± std) | Trainable params | Latency ms/window |",
@@ -234,6 +266,8 @@ def parse_args(argv=None):
     p.add_argument("--shuffle-repeats", type=int, default=5)
     p.add_argument("--no-standardize", action="store_true")
     p.add_argument("--no-resume", action="store_true", help="retrain seeds even if saved results exist")
+    p.add_argument("--sensor-tokens", type=int, default=8, help="soft tokens for the multi-token conditions")
+    p.add_argument("--lora-r", type=int, default=8, help="LoRA rank (q/v projections) for context_lora")
     args = p.parse_args(argv)
     if args.context_epochs is None:
         args.context_epochs = args.epochs
@@ -241,10 +275,31 @@ def parse_args(argv=None):
 
 
 def run_key(args) -> dict:
-    """Settings that must match for a saved seed to be reused."""
-    keys = ("data_dir", "conditions", "epochs", "context_epochs", "lr", "context_lr", "batch_size",
+    """Shared settings that must match for saved results to be reused."""
+    keys = ("data_dir", "epochs", "context_epochs", "lr", "context_lr", "batch_size",
             "llm", "llm_dim", "shuffle_repeats", "no_standardize")
     return {k: getattr(args, k) for k in keys}
+
+
+def load_reusable(path: str, args) -> dict:
+    """Completed per-condition results from an earlier run with matching settings."""
+    if args.no_resume or not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8") as f:
+        saved = json.load(f)
+    key = run_key(args)
+    if any(saved.get("run_key", {}).get(k) != v for k, v in key.items()):
+        return {}
+    results = saved["results"]
+    keep = {}
+    for cond in CONDITIONS:
+        if cond in results and results[cond].get("settings", {}) == condition_settings(cond, args):
+            keep[cond] = results[cond]
+            if cond in CONTEXT_CONDITIONS and shuffled_key(cond) in results:
+                keep[shuffled_key(cond)] = results[shuffled_key(cond)]
+    if "standardizer" in results:
+        keep["standardizer"] = results["standardizer"]
+    return keep
 
 
 def main(argv=None):
@@ -255,21 +310,21 @@ def main(argv=None):
 
     per_seed = {}
     for seed in args.seeds:
-        # Each seed is saved as soon as it finishes, so an interrupted run resumes
-        # where it stopped instead of losing every completed seed.
+        # Results are saved after every condition, so an interrupted run resumes where it
+        # stopped, and adding a new condition later only trains that condition.
         path = os.path.join(args.out_dir, f"seed{seed}", "metrics.json")
-        key = run_key(args)
-        if not args.no_resume and os.path.exists(path):
-            with open(path, encoding="utf-8") as f:
-                saved = json.load(f)
-            if saved.get("run_key") == key:
-                print(f"Seed {seed}: reusing completed results from {path}")
-                per_seed[seed] = saved["results"]
-                continue
-        per_seed[seed] = run_seed(seed, args, device)
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump({"run_key": key, "results": per_seed[seed]}, f, indent=2)
+        existing = load_reusable(path, args)
+        reused = [c for c in args.conditions if c in existing]
+        if reused:
+            print(f"Seed {seed}: reusing {reused} from {path}")
+
+        def save(results, path=path):
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump({"run_key": run_key(args), "results": results}, f, indent=2)
+
+        per_seed[seed] = run_seed(seed, args, device, existing, on_condition_done=save)
+        save(per_seed[seed])
 
     summary, table = summarize(per_seed, args)
 
