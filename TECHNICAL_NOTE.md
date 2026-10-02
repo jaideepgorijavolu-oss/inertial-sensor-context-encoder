@@ -2,46 +2,92 @@
 
 ## 1. Architectural Overview
 
-* **Input Representation**: 9-channel inertial telemetry (triaxial total acceleration, body acceleration, angular velocity) sampled at 50 Hz across 128 timesteps (`[B, 9, 128]`).
-* **Feature Extraction**: 3-stage 1D-CNN backbone (kernel size 5, stride 1) with batch normalization, ReLU activations, and adaptive average pooling down to an embedding vector.
-* **Cross-Modal Projector**: 2-layer MLP projecting 256-dimensional sensor features into SmolLM2's native 960-dimensional token space.
-* **Language Backbone**: Frozen `HuggingFaceTB/SmolLM2-360M` (361,821,120 parameters). Sensor vectors are concatenated between text prompt tokens (`inputs_embeds`).
-* **Classification Head**: Linear projection layer mapping the final LLM hidden state (`d_model = 960`) to 6 output activity logits.
-* **Parameter Efficiency**: 1,319,686 trainable parameters (~0.36% of backbone size).
+* **Input Representation**: 9-channel inertial telemetry (triaxial total acceleration, body acceleration, angular velocity) sampled at 50 Hz across 128 timesteps (`[B, 128, 9]`), z-scored per channel with statistics from the training subjects only.
+* **Feature Extraction**: 3-stage 1D-CNN (kernels 7/5/3, stride 2, channels 64/128/256) with batch normalization, ReLU, dropout, and global average pooling to a 256-d vector.
+* **Cross-Modal Projector**: 2-layer MLP (Linear → GELU → Linear) projecting 256-d sensor features into SmolLM2's 960-d token-embedding space.
+* **Language Backbone**: Frozen `HuggingFaceTB/SmolLM2-360M-Instruct` base transformer (no LM head). The projected sensor vector is spliced as one soft token between prompt-prefix and prompt-suffix token embeddings (`inputs_embeds`).
+* **Classification Head**: Linear layer on the final-layer hidden state at the last position (`d_model = 960`) → 6 activity logits.
+* **Gradient path**: backbone weights have `requires_grad=False`, but the forward pass is *not* wrapped in `torch.no_grad()`, so the loss backpropagates through the frozen transformer into the projector and encoder. (An earlier version wrapped the backbone in `no_grad`, which detached the sensor token from the loss and left the encoder and projector at their random initialization; `tests/test_context_model.py` guards against this regression.)
 
 ---
 
 ## 2. Evaluation Protocol & Data Isolation
 
 * **Dataset**: UCI Human Activity Recognition (30 participants).
-* **Leakage Prevention**: Evaluated strictly on unseen subjects. Subject-level validation partitions ensure 0% identity or time-series overlap between train, validation, and test splits.
-* **Primary Metric**: Macro-F1 across all 6 classes (Walking, Walking Upstairs, Walking Downstairs, Sitting, Standing, Laying) to account for slight class frequency variations.
+* **Leakage Prevention**: Subject-disjoint splits. Validation = training subjects 27–30; test = the official UCI test subjects. Disjointness is asserted at load time and in the test suite. Normalization statistics come from training subjects only.
+* **Model selection**: best validation macro-F1 checkpoint (a true copy of the weights, not a reference to the live parameters).
+* **Budget parity**: all conditions train for the same number of epochs by default (AdamW, cosine LR schedule, gradient clipping at 1.0).
+* **Repetition**: 3 seeds by default; results reported as mean ± sample std.
+* **Primary Metric**: Macro-F1 across the 6 classes (Walking, Walking Upstairs, Walking Downstairs, Sitting, Standing, Laying). Per-class F1 and confusion matrices are saved to `artifacts/results.json`.
 
 ---
 
-## 3. Quantitative Results
+## 3. Conditions
 
-| Experimental Condition | Test Macro-F1 | Trainable Parameters | Description |
-| :--- | :--- | :--- | :--- |
-| **Condition 1: Direct Sensor Classifier** | **0.9337** | 145,094 | Dedicated 1D-CNN baseline directly optimized for classification |
-| **Condition 2: Context-Embedding Model** | **0.5130** | 1,319,686 | 1D-CNN + MLP projector into frozen SmolLM2-360M |
-| **Condition 3: Negative Control (Shuffled)** | **0.2618** | 0 (Inference) | Condition 2 evaluated with permuted sensor tokens across batch |
-
----
-
-## 4. Key Findings & Discussion
-
-* **Physical Feature Grounding**: Permuting the sensor token across the batch (Condition 3) drops test Macro-F1 from 0.5130 down to 0.2618 (a 48.97% relative drop). This confirms the classification head extracts state signals directly from injected sensor embeddings rather than over-indexing on the static text prompt.
-* **Compute-to-Accuracy Trade-off**: The direct 1D-CNN baseline achieves 0.9337 Macro-F1 with 89% fewer trainable parameters, sub-millisecond per-window latency, and negligible RAM footprint. Contextual LLM injection introduces significant memory and inference overhead, demonstrating that for pure discrete classification, specialized lightweight encoders remain vastly superior.
-* **Autograd Optimization**: Wrapping the frozen 360M transformer forward pass in `torch.no_grad()` prevented computational graph retention across 30 transformer layers, eliminating CPU memory thrashing.
+| Condition | Purpose |
+| :--- | :--- |
+| **Direct sensor classifier** | Task-specific CNN baseline |
+| **Matched-capacity ablation** | Identical trainable stack (CNN + projector + head) without the LLM, separating the LLM's contribution from the extra parameters |
+| **Context model, 1 token (frozen)** | CNN + projector into one soft token in frozen SmolLM2-360M |
+| **Context model, 8 tokens (frozen)** | Conv features pooled into 8 temporal-segment tokens, so the LLM sees the signal's time structure |
+| **Context model, 8 tokens + LoRA** | As above, plus rank-8 LoRA adapters on attention q/v projections (+819K trainable parameters) |
+| **Shuffled negative controls** | Each context model with sensor tokens permuted across the batch (mean of 5 permutations); tests sensor dependence |
 
 ---
 
-## 5. Reproduction
+## 4. Results
+
+Generated by `python -m src.train` (`artifacts/results.md`): 3 seeds (42, 43, 44), 15 epochs for every condition,
+batch 64, standardized inputs, NVIDIA RTX 5060 Laptop GPU. Latency is the median of 100 single-window inferences per
+architecture on an otherwise idle GPU (`--remeasure-latency`).
+
+| Condition | Test Macro-F1 (mean ± std) | Per seed (42 / 43 / 44) | Trainable params | Latency ms/window |
+| :--- | :--- | :--- | ---: | ---: |
+| Direct sensor classifier | **0.9337 ± 0.0056** | 0.937 / 0.927 / 0.937 | 146,182 | 0.44 |
+| Matched-capacity, no LLM (ablation) | 0.9279 ± 0.0096 | 0.937 / 0.929 / 0.918 | 1,319,686 | 0.45 |
+| Context, 1 token, frozen LLM | 0.9238 ± 0.0057 | 0.921 / 0.930 / 0.920 | 1,319,686 | 24.97 |
+| Context, 8 tokens, frozen LLM | 0.9205 ± 0.0108 | 0.925 / 0.908 / 0.929 | 1,319,686 | 25.97 |
+| Context, 8 tokens + LoRA (r=8) | 0.9155 ± 0.0278 | 0.931 / 0.932 / 0.883 | 2,138,886 | 31.83 |
+| Shuffled control, 1 token | 0.3618 ± 0.0013 | | 0 | — |
+| Shuffled control, 8 tokens | 0.3610 ± 0.0039 | | 0 | — |
+| Shuffled control, 8 tokens + LoRA | 0.3590 ± 0.0097 | | 0 | — |
+
+The LLM conditions also carry 361.8M frozen backbone parameters.
+
+Mean per-class F1 over seeds:
+
+| Class | Direct | Matched (no LLM) | 1 token | 8 tokens | 8 tokens + LoRA |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| Walking | 0.997 | 0.987 | 0.987 | 0.973 | 0.975 |
+| Walking upstairs | 0.951 | 0.957 | 0.950 | 0.955 | 0.955 |
+| Walking downstairs | 0.976 | 0.959 | 0.950 | 0.953 | 0.942 |
+| Sitting | 0.835 | 0.831 | 0.818 | 0.817 | 0.785 |
+| Standing | 0.859 | 0.843 | 0.847 | 0.837 | 0.837 |
+| Laying | 0.984 | 0.991 | 0.990 | 0.987 | 0.999 |
+
+> Earlier versions of this repo reported Context 0.5130 / Shuffled 0.2618 (single seed). Those
+> numbers came from a bug: a `torch.no_grad()` around the backbone meant the encoder and
+> projector never trained, and the context model got 5 epochs vs 15. With gradients flowing
+> and equal budgets, the context model reaches 0.92 macro-F1.
+
+---
+
+## 5. Findings
+
+* **Every LLM variant is driven by the sensor tokens.** Permuting sensor tokens across the batch drops all three context models to ~0.36 macro-F1 (chance for 6 classes is about 0.17), with very low variance. Predictions come from the injected embeddings, not the static prompt.
+* **A frozen 360M LLM can consume raw sensor embeddings directly.** With no text serialization, a single soft token supports 0.92 macro-F1 on unseen subjects, within about 1 point of a dedicated CNN.
+* **The LLM adds no accuracy at matched capacity.** Removing the LLM from the identical trainable stack gives 0.928 vs 0.924, within seed-to-seed spread. The direct CNN, with 9x fewer trainable parameters, is best at 0.934.
+* **More sensor tokens do not help.** Eight temporal-segment tokens (0.921 ± 0.011) match one pooled token (0.924 ± 0.006): the CNN's pooled summary already captures what the frozen backbone uses.
+* **LoRA raises the ceiling but adds instability.** Adapting the backbone gives the two best LLM runs of the study (0.931 and 0.932, above every frozen variant on those seeds and above the direct CNN on seed 43). On seed 44, however, the best-validation checkpoint (epoch 2, val 0.950) generalized poorly: 227 of 491 Sitting windows were predicted as Standing (test 0.883). With only 4 validation subjects, checkpoint selection is noisy, and the higher-capacity LoRA model is most exposed to it. Subject-wise cross-validation or selecting on validation loss are the natural next steps.
+* **Cost: 57-72x the latency.** 25-32 ms vs 0.44 ms per window on the same GPU, plus 1.4 GB of frozen weights. For closed-set activity classification a specialized encoder is the right tool; the LLM pathway is justified only when the downstream task needs language (open-ended questions, explanations, multi-turn reasoning over sensor context).
+* **Errors are the expected ones.** All models lose most of their F1 on Sitting vs. Standing (about 0.79-0.86), the known hard pair in UCI HAR; dynamic activities and Laying are at least 0.94.
+
+---
+
+## 6. Reproduction
 
 ```bash
-# Run unit tests
+python -m src.download_data
 python -m pytest tests -v
-
-# Train and reproduce full evaluation summary
 python -m src.train
+```
