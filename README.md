@@ -8,12 +8,27 @@ ablation, and a shuffled-token negative control. See [TECHNICAL_NOTE.md](TECHNIC
 
 ## Experimental conditions
 
-| # | Condition | What it isolates |
-| :- | :--- | :--- |
-| 1 | Direct sensor classifier (1D-CNN + linear head) | Strong task-specific baseline |
-| 2 | Context-embedding model (CNN → MLP projector → frozen SmolLM2 → head) | Sensor-as-token injection |
-| 3 | Matched-capacity ablation (CNN → same projector → head, **no LLM**) | Whether the LLM adds anything beyond the extra trainable parameters |
-| 4 | Condition 2 with sensor tokens permuted across the batch | Whether predictions actually depend on the sensor token |
+| Condition | What it isolates |
+| :--- | :--- |
+| Direct sensor classifier (1D-CNN + linear head) | Strong task-specific baseline |
+| Matched-capacity ablation (CNN, projector, head, **no LLM**) | Whether the LLM adds anything beyond the extra trainable parameters |
+| Context model, 1 sensor token (frozen SmolLM2) | Sensor-as-token injection |
+| Context model, 8 temporal sensor tokens (frozen) | Whether exposing time structure to the LLM helps |
+| Context model, 8 tokens + LoRA (r=8, q/v) | Whether adapting the LLM helps |
+| Shuffled-token controls (one per context model) | Whether predictions actually depend on the sensor tokens |
+
+## Results (3 seeds, RTX 5060 Laptop GPU)
+
+| Condition | Test Macro-F1 | Latency |
+| :--- | :--- | ---: |
+| Direct CNN | **0.934 ± 0.006** | 0.44 ms |
+| Matched, no LLM | 0.928 ± 0.010 | 0.45 ms |
+| Frozen LLM, 1 token | 0.924 ± 0.006 | 25.0 ms |
+| Frozen LLM, 8 tokens | 0.921 ± 0.011 | 26.0 ms |
+| LLM + LoRA, 8 tokens | 0.916 ± 0.028 (0.931 / 0.932 / 0.883) | 31.8 ms |
+| Shuffled controls | about 0.36 | — |
+
+A frozen LLM classifies raw IMU embeddings at 0.92 macro-F1 and genuinely depends on them (shuffling drops it to 0.36), but adds no accuracy over a parameter-matched network without it; LoRA gives the best LLM runs on 2 of 3 seeds but is unstable under small-validation-set checkpoint selection. Full analysis in [TECHNICAL_NOTE.md](TECHNICAL_NOTE.md).
 
 Protocol: subject-disjoint splits (val = subjects 27–30, test = official UCI test subjects),
 per-channel standardization fit on the training subjects only, equal epoch budgets by default,
@@ -41,8 +56,12 @@ python -m src.download_data        # fetches UCI HAR into data/UCI HAR Dataset
 # Unit tests (no dataset or model download needed; uses a tiny random Llama)
 python -m pytest tests -v
 
-# Full benchmark: all conditions, 3 seeds, equal 15-epoch budgets
+# Full benchmark: all 5 conditions, 3 seeds, equal 15-epoch budgets (~2 h on an RTX 5060 Laptop GPU)
+# Results are saved after every condition; rerunning resumes and skips completed work.
 python -m src.train
+
+# Re-time every architecture on an idle GPU
+python -m src.train --remeasure-latency
 
 # Faster iteration examples
 python -m src.train --seeds 42 --conditions direct matched

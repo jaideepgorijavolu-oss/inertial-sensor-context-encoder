@@ -94,11 +94,11 @@ def full_metrics(model, loader, device, shuffle: bool = False) -> dict:
 
 
 @torch.no_grad()
-def latency_ms_per_window(model: nn.Module, device, batch_size: int = 1, reps: int = 20) -> float:
+def latency_ms_per_window(model: nn.Module, device, batch_size: int = 1, reps: int = 100) -> float:
     """Median single-window inference latency (the deployment-relevant number)."""
     model.eval()
     x = torch.randn(batch_size, 128, 9, device=device)
-    for _ in range(3):
+    for _ in range(10):
         model(x)
     times = []
     for _ in range(reps):
@@ -268,6 +268,8 @@ def parse_args(argv=None):
     p.add_argument("--no-resume", action="store_true", help="retrain seeds even if saved results exist")
     p.add_argument("--sensor-tokens", type=int, default=8, help="soft tokens for the multi-token conditions")
     p.add_argument("--lora-r", type=int, default=8, help="LoRA rank (q/v projections) for context_lora")
+    p.add_argument("--remeasure-latency", action="store_true",
+                   help="re-time every condition on an otherwise idle device and update saved results")
     args = p.parse_args(argv)
     if args.context_epochs is None:
         args.context_epochs = args.epochs
@@ -325,6 +327,24 @@ def main(argv=None):
 
         per_seed[seed] = run_seed(seed, args, device, existing, on_condition_done=save)
         save(per_seed[seed])
+
+    if args.remeasure_latency:
+        # Latency depends only on the architecture, so one clean measurement per condition
+        # replaces timings taken while other work shared the machine.
+        for cond in args.conditions:
+            set_seed(0)
+            model = build(cond, args).to(device)
+            lat = latency_ms_per_window(model, device)
+            print(f"latency {CONDITION_LABELS[cond]}: {lat:.2f} ms/window")
+            for seed in per_seed:
+                per_seed[seed][cond]["latency_ms"] = lat
+            del model
+            if device.type == "cuda":
+                torch.cuda.empty_cache()
+        for seed in per_seed:
+            path = os.path.join(args.out_dir, f"seed{seed}", "metrics.json")
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump({"run_key": run_key(args), "results": per_seed[seed]}, f, indent=2)
 
     summary, table = summarize(per_seed, args)
 
