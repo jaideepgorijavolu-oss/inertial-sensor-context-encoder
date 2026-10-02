@@ -34,4 +34,14 @@ def test_train_cli_end_to_end(tmp_path):
     assert set(results["summary"]) == {"direct", "matched"}
     assert len(results["summary"]["direct"]["macro_f1_per_seed"]) == 2
     assert (out / "seed1" / "best_direct.pt").exists()
-    assert "Matched-capacity" in (out / "results.md").read_text()
+    assert "Matched-capacity" in (out / "results.md").read_text(encoding="utf-8")
+
+    # Rerunning with the same settings reuses saved seeds instead of retraining.
+    ckpt = out / "seed1" / "best_direct.pt"
+    mtime = ckpt.stat().st_mtime
+    main([
+        "--data-dir", str(data), "--out-dir", str(out), "--seeds", "1", "2",
+        "--conditions", "direct", "matched", "--epochs", "1", "--batch-size", "8", "--llm-dim", "32",
+    ])
+    assert ckpt.stat().st_mtime == mtime
+    assert json.loads((out / "results.json").read_text())["summary"] == results["summary"]

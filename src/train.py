@@ -233,10 +233,18 @@ def parse_args(argv=None):
     p.add_argument("--gradient-checkpointing", action="store_true", help="trade compute for LLM activation memory")
     p.add_argument("--shuffle-repeats", type=int, default=5)
     p.add_argument("--no-standardize", action="store_true")
+    p.add_argument("--no-resume", action="store_true", help="retrain seeds even if saved results exist")
     args = p.parse_args(argv)
     if args.context_epochs is None:
         args.context_epochs = args.epochs
     return args
+
+
+def run_key(args) -> dict:
+    """Settings that must match for a saved seed to be reused."""
+    keys = ("data_dir", "conditions", "epochs", "context_epochs", "lr", "context_lr", "batch_size",
+            "llm", "llm_dim", "shuffle_repeats", "no_standardize")
+    return {k: getattr(args, k) for k in keys}
 
 
 def main(argv=None):
@@ -245,7 +253,24 @@ def main(argv=None):
     args.device_name = torch.cuda.get_device_name(0) if device.type == "cuda" else "cpu"
     print(f"Device: {args.device_name} | seeds: {args.seeds} | conditions: {args.conditions}")
 
-    per_seed = {seed: run_seed(seed, args, device) for seed in args.seeds}
+    per_seed = {}
+    for seed in args.seeds:
+        # Each seed is saved as soon as it finishes, so an interrupted run resumes
+        # where it stopped instead of losing every completed seed.
+        path = os.path.join(args.out_dir, f"seed{seed}", "metrics.json")
+        key = run_key(args)
+        if not args.no_resume and os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                saved = json.load(f)
+            if saved.get("run_key") == key:
+                print(f"Seed {seed}: reusing completed results from {path}")
+                per_seed[seed] = saved["results"]
+                continue
+        per_seed[seed] = run_seed(seed, args, device)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"run_key": key, "results": per_seed[seed]}, f, indent=2)
+
     summary, table = summarize(per_seed, args)
 
     os.makedirs(args.out_dir, exist_ok=True)

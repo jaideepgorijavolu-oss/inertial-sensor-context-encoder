@@ -10,3 +10,5 @@ outputs/
 .env
 venv/
 env/
+artifacts/*.log
+artifacts/*.err
