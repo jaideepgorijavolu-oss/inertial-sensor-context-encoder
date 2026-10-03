@@ -334,6 +334,42 @@ def parse_args(argv=None):
     return args
 
 
+def run_environment(args) -> dict:
+    """Versions, code commit, dataset fingerprint and model revision, saved with every run."""
+    import hashlib
+    import platform
+    import subprocess
+
+    import sklearn
+    import transformers
+
+    def git(*cmd):
+        try:
+            return subprocess.check_output(["git", *cmd], text=True, stderr=subprocess.DEVNULL).strip()
+        except Exception:
+            return None
+
+    digest = hashlib.sha256()
+    for split in ("train", "test"):
+        for name in (f"y_{split}.txt", f"subject_{split}.txt"):
+            path = os.path.join(args.data_dir, split, name)
+            if os.path.exists(path):
+                with open(path, "rb") as f:
+                    digest.update(f.read())
+    revision = None
+    try:
+        from huggingface_hub import model_info
+        revision = model_info(args.llm).sha
+    except Exception:
+        pass
+    return {
+        "python": platform.python_version(), "torch": torch.__version__, "cuda": torch.version.cuda,
+        "transformers": transformers.__version__, "scikit_learn": sklearn.__version__, "numpy": np.__version__,
+        "git_commit": git("rev-parse", "HEAD"), "git_dirty": bool(git("status", "--porcelain")),
+        "dataset_labels_sha256": digest.hexdigest(), "llm": args.llm, "llm_revision": revision,
+    }
+
+
 def run_key(args) -> dict:
     """Shared settings that must match for saved results to be reused."""
     keys = ("data_dir", "epochs", "context_epochs", "lr", "context_lr", "batch_size",
@@ -408,7 +444,8 @@ def main(argv=None):
 
     os.makedirs(args.out_dir, exist_ok=True)
     with open(os.path.join(args.out_dir, "results.json"), "w", encoding="utf-8") as f:
-        json.dump({"config": vars(args), "summary": summary, "per_seed": per_seed}, f, indent=2)
+        json.dump({"config": vars(args), "environment": run_environment(args), "summary": summary,
+                   "per_seed": per_seed}, f, indent=2)
     with open(os.path.join(args.out_dir, "results.md"), "w", encoding="utf-8") as f:
         f.write(table + "\n")
     print("\n" + table)

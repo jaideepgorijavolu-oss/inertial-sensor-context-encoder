@@ -91,6 +91,7 @@ python -m src.download_data           # UCI HAR → data/UCI HAR Dataset
 python -m pytest tests -v             # 25 tests, CPU only, no downloads
 python -m src.train                   # all 5 conditions × 3 seeds (≈2 h on an RTX 5060 Laptop GPU)
 python -m src.train --remeasure-latency   # re-time each architecture on an idle GPU
+python -m src.predict --condition direct --seed 42   # inference from a saved checkpoint
 ```
 
 - **Resumable:** results are saved after every condition. Rerunning skips finished work, and adding a condition trains only that condition.
