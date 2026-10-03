@@ -124,7 +124,6 @@ class ContextEmbeddingModel(nn.Module):
         encoder: SensorEncoder,
         llm_model_name: str = DEFAULT_LLM,
         num_classes: int = 6,
-        gradient_checkpointing: bool = False,
         num_sensor_tokens: int = 1,
         lora_r: int = 0,
     ) -> "ContextEmbeddingModel":
@@ -134,8 +133,6 @@ class ContextEmbeddingModel(nn.Module):
         llm = AutoModel.from_pretrained(llm_model_name, dtype=torch.float32)
         if lora_r:
             llm = add_lora(llm, lora_r)
-        if gradient_checkpointing:
-            llm.gradient_checkpointing_enable()
         prefix_ids = tokenizer.encode(PROMPT_PREFIX, return_tensors="pt", add_special_tokens=True)
         suffix_ids = tokenizer.encode(PROMPT_SUFFIX, return_tensors="pt", add_special_tokens=False)
         return cls(encoder, llm, prefix_ids, suffix_ids, num_classes, num_sensor_tokens)
@@ -146,7 +143,8 @@ class ContextEmbeddingModel(nn.Module):
         self.llm.eval()
         return self
 
-    def forward(self, x: torch.Tensor, shuffle_embeddings: bool = False) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, zero_sensor: bool = False) -> torch.Tensor:
+        """zero_sensor=True replaces the sensor tokens with zeros (a constant-input control)."""
         B = x.size(0)
         if self.num_sensor_tokens == 1:
             sensor_feats = self.encoder(x).unsqueeze(1)  # [B, 1, H]
@@ -154,9 +152,8 @@ class ContextEmbeddingModel(nn.Module):
             sensor_feats = self.encoder.forward_sequence(x, self.num_sensor_tokens)  # [B, K, H]
         sensor_embed = self.projector(sensor_feats)  # [B, K, D]
 
-        if shuffle_embeddings:
-            # Negative control: pair every prompt with another sample's sensor token.
-            sensor_embed = sensor_embed[torch.randperm(B, device=x.device)]
+        if zero_sensor:
+            sensor_embed = torch.zeros_like(sensor_embed)
 
         embed_tokens = self.llm.get_input_embeddings()
         prefix_embeds = embed_tokens(self.prefix_ids.expand(B, -1))

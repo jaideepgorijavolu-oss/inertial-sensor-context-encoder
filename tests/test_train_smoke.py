@@ -45,3 +45,29 @@ def test_train_cli_end_to_end(tmp_path):
     ])
     assert ckpt.stat().st_mtime == mtime
     assert json.loads((out / "results.json").read_text())["summary"] == results["summary"]
+
+
+def test_condition_training_does_not_depend_on_run_order(tmp_path):
+    """The matched model trained alone, after `direct`, or in a resumed run must be identical."""
+    import torch
+
+    rng = np.random.default_rng(1)
+    data = tmp_path / "UCI HAR Dataset"
+    write_split(str(data), "train", [1] * 20 + [3] * 20 + [27] * 6, rng)
+    write_split(str(data), "test", [2] * 12, rng)
+    common = ["--data-dir", str(data), "--seeds", "5", "--epochs", "2", "--batch-size", "8", "--llm-dim", "32"]
+
+    main([*common, "--out-dir", str(tmp_path / "alone"), "--conditions", "matched"])
+    main([*common, "--out-dir", str(tmp_path / "after"), "--conditions", "direct", "matched"])
+    main([*common, "--out-dir", str(tmp_path / "resumed"), "--conditions", "direct"])
+    main([*common, "--out-dir", str(tmp_path / "resumed"), "--conditions", "direct", "matched"])
+
+    def load(run):
+        return torch.load(tmp_path / run / "seed5" / "best_matched.pt")
+
+    reference = load("alone")
+    for run in ("after", "resumed"):
+        other = load(run)
+        assert reference.keys() == other.keys()
+        for k in reference:
+            assert torch.equal(reference[k], other[k]), (run, k)

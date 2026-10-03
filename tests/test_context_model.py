@@ -81,16 +81,31 @@ def test_prediction_depends_on_sensor_input(model):
     assert not torch.allclose(a, b)
 
 
-def test_shuffle_permutes_sensor_tokens_across_batch(model):
+def test_zero_sensor_control_ignores_the_input(model):
     model.eval()
-    x = torch.randn(8, 128, 9)
     with torch.no_grad():
-        clean = model(x)
-        torch.manual_seed(1)
-        shuffled = model(x, shuffle_embeddings=True)
-    # Same set of logit rows, different order (a permutation of the batch).
-    assert not torch.allclose(clean, shuffled)
-    assert torch.allclose(clean.sort(dim=0).values, shuffled.sort(dim=0).values, atol=1e-5)
+        a = model(torch.randn(3, 128, 9), zero_sensor=True)
+        b = model(torch.randn(3, 128, 9), zero_sensor=True)
+    assert torch.allclose(a, b, atol=1e-6)
+    assert torch.allclose(a, a[:1].expand_as(a), atol=1e-6)  # identical prediction for every window
+
+
+def test_global_controls_on_a_tiny_model():
+    from torch.utils.data import DataLoader
+
+    from src.dataset import HARDataset
+    from src.train import control_metrics, derangement
+
+    perm = derangement(50, torch.Generator().manual_seed(0))
+    assert sorted(perm.tolist()) == list(range(50))
+    assert not (perm == torch.arange(50)).any()  # no window is paired with itself
+    assert torch.equal(perm, derangement(50, torch.Generator().manual_seed(0)))  # seeded
+
+    loader = DataLoader(HARDataset(torch.randn(40, 128, 9).numpy(), (torch.arange(40) % 6).numpy()), batch_size=16)
+    controls = control_metrics(tiny_model(), loader, torch.device("cpu"), seed=1, repeats=3)
+    assert controls["shuffled_global"]["permutations"] == 3
+    assert 0 <= controls["shuffled_global"]["macro_f1"] <= 1
+    assert 0 <= controls["zero"]["macro_f1"] <= 1
 
 
 def test_trainable_state_dict_is_a_snapshot_without_llm(model):

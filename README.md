@@ -94,7 +94,7 @@ python -m src.train --remeasure-latency   # re-time each architecture on an idle
 ```
 
 - **Resumable:** results are saved after every condition. Rerunning skips finished work, and adding a condition trains only that condition.
-- **Faster runs:** use `--seeds 42 --conditions direct matched` for quick iteration, or `--gradient-checkpointing` for smaller GPUs.
+- **Faster runs:** use `--seeds 42 --conditions direct matched` for quick iteration.
 
 Outputs in `artifacts/`:
 - `results.md`: the summary table.
