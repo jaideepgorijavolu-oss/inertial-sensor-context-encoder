@@ -29,14 +29,18 @@ CONDITION_LABELS = {
     "context": "Context model, 1 sensor token (frozen LLM)",
     "context_mt": "Context model, multi-token (frozen LLM)",
     "context_lora": "Context model, multi-token + LoRA",
-    "shuffled": "Context model, 1 token, shuffled (control)",
-    "context_mt_shuffled": "Context model, multi-token, shuffled (control)",
-    "context_lora_shuffled": "Context model, multi-token + LoRA, shuffled (control)",
+    "context_shuffled_global": "Context model, 1 token: globally shuffled sensor (control)",
+    "context_mt_shuffled_global": "Context model, multi-token: globally shuffled sensor (control)",
+    "context_lora_shuffled_global": "Context model, multi-token + LoRA: globally shuffled sensor (control)",
+    "context_zero": "Context model, 1 token: zeroed sensor (control)",
+    "context_mt_zero": "Context model, multi-token: zeroed sensor (control)",
+    "context_lora_zero": "Context model, multi-token + LoRA: zeroed sensor (control)",
 }
 
 
-def shuffled_key(cond: str) -> str:
-    return "shuffled" if cond == "context" else f"{cond}_shuffled"
+def control_keys(cond: str) -> tuple:
+    """Result keys of the evaluation-time controls for a context condition."""
+    return f"{cond}_shuffled_global", f"{cond}_zero"
 
 
 def condition_settings(cond: str, args) -> dict:
@@ -64,27 +68,61 @@ def count_params(model: nn.Module) -> tuple:
 
 
 @torch.no_grad()
-def predict(model: nn.Module, loader, device, shuffle: bool = False) -> tuple:
+def predict(model: nn.Module, loader, device, perm: torch.Tensor = None, zero_sensor: bool = False) -> tuple:
+    """
+    Labels and predictions over the loader's whole (unshuffled) dataset. With `perm`, window
+    perm[k] is paired with label k, i.e. inputs are re-paired across the entire evaluation set.
+    """
     model.eval()
-    preds, labels = [], []
-    for X, y in loader:
-        X = X.to(device)
-        if isinstance(model, ContextEmbeddingModel):
-            logits = model(X, shuffle_embeddings=shuffle)
-        else:
-            logits = model(X)
+    X_all, y_all = loader.dataset.X, loader.dataset.y
+    if perm is not None:
+        X_all = X_all[perm]
+    preds = []
+    for k in range(0, len(y_all), loader.batch_size):
+        X = X_all[k:k + loader.batch_size].to(device)
+        logits = model(X, zero_sensor=True) if zero_sensor else model(X)
         preds.append(logits.argmax(dim=-1).cpu().numpy())
-        labels.append(y.numpy())
-    return np.concatenate(labels), np.concatenate(preds)
+    return y_all.numpy(), np.concatenate(preds)
 
 
-def macro_f1(model, loader, device, shuffle: bool = False) -> float:
-    y, p = predict(model, loader, device, shuffle)
+def macro_f1(model, loader, device, **kw) -> float:
+    y, p = predict(model, loader, device, **kw)
     return float(f1_score(y, p, average="macro"))
 
 
-def full_metrics(model, loader, device, shuffle: bool = False) -> dict:
-    y, p = predict(model, loader, device, shuffle)
+def derangement(n: int, generator: torch.Generator) -> torch.Tensor:
+    """Uniformly shuffled permutation with no fixed points (no window is paired with itself)."""
+    order = torch.randperm(n, generator=generator)
+    perm = torch.empty_like(order)
+    perm[order] = order.roll(-1)  # each element maps to the next one in a random cycle
+    return perm
+
+
+def control_metrics(model, loader, device, seed: int, repeats: int) -> dict:
+    """
+    Evaluation-time controls for a context model (no retraining):
+      * globally shuffled: every test label is paired with a different window drawn from the
+        whole test set (a seeded derangement), averaged over `repeats` permutations. This is
+        the empirical chance baseline for the trained model; shuffling only within batches is
+        not, because the test set is ordered by subject and activity.
+      * zeroed: the sensor tokens are replaced by zeros, so only the prompt remains.
+    """
+    n = len(loader.dataset)
+    runs = [full_metrics(model, loader, device, perm=derangement(n, torch.Generator().manual_seed(seed * 1000 + r)))
+            for r in range(repeats)]
+    shuffled = {
+        "macro_f1": float(np.mean([r["macro_f1"] for r in runs])),
+        "macro_f1_std_over_permutations": float(np.std([r["macro_f1"] for r in runs], ddof=1)) if repeats > 1 else 0.0,
+        "accuracy": float(np.mean([r["accuracy"] for r in runs])),
+        "permutations": repeats,
+        "trainable_params": 0,
+    }
+    zero = {**full_metrics(model, loader, device, zero_sensor=True), "trainable_params": 0}
+    return {"shuffled_global": shuffled, "zero": zero}
+
+
+def full_metrics(model, loader, device, **kw) -> dict:
+    y, p = predict(model, loader, device, **kw)
     return {
         "macro_f1": float(f1_score(y, p, average="macro")),
         "accuracy": float((y == p).mean()),
@@ -158,7 +196,7 @@ def build(condition: str, args) -> nn.Module:
         return MatchedCapacityClassifier(encoder, llm_dim=args.llm_dim)
     settings = condition_settings(condition, args)
     return ContextEmbeddingModel.from_pretrained(
-        encoder, args.llm, gradient_checkpointing=args.gradient_checkpointing,
+        encoder, args.llm,
         num_sensor_tokens=settings.get("sensor_tokens", 1), lora_r=settings.get("lora_r", 0),
     )
 
@@ -166,18 +204,46 @@ def build(condition: str, args) -> nn.Module:
 def run_seed(seed: int, args, device, existing: dict = None, on_condition_done=None) -> dict:
     """Train/evaluate every condition for one seed, skipping conditions already in `existing`."""
     results = dict(existing or {})
+    out_dir = os.path.join(args.out_dir, f"seed{seed}")
     todo = [c for c in args.conditions if c not in results]
-    if not todo:
+    # Trained context conditions whose controls are missing (e.g. results from before the
+    # global-shuffle control existed) are re-evaluated from their checkpoints, not retrained.
+    refill = [c for c in args.conditions if c in results and c in CONTEXT_CONDITIONS
+              and any(k not in results for k in control_keys(c))
+              and os.path.exists(os.path.join(out_dir, f"best_{c}.pt"))]
+    if not todo and not refill:
         return results
     set_seed(seed)
     train_loader, val_loader, test_loader, scaler = get_dataloaders(
         data_dir=args.data_dir, batch_size=args.batch_size, val_subjects=DEFAULT_VAL_SUBJECTS,
         standardize=not args.no_standardize, seed=seed,
     )
-    out_dir = os.path.join(args.out_dir, f"seed{seed}")
+
+    def add_controls(cond, model):
+        controls = control_metrics(model, test_loader, device, seed, args.shuffle_repeats)
+        shuffled_k, zero_k = control_keys(cond)
+        results[shuffled_k], results[zero_k] = controls["shuffled_global"], controls["zero"]
+        print(f"  --> controls: global shuffle macro-F1 {results[shuffled_k]['macro_f1']:.4f} | "
+              f"zeroed sensor macro-F1 {results[zero_k]['macro_f1']:.4f}")
+
+    for cond in refill:
+        print(f"\n=== seed {seed} | {CONDITION_LABELS[cond]}: controls from checkpoint ===")
+        set_seed(seed)
+        model = build(cond, args).to(device)
+        missing, unexpected = model.load_state_dict(
+            torch.load(os.path.join(out_dir, f"best_{cond}.pt"), map_location=device), strict=False)
+        assert not unexpected and all(k.startswith("llm.") for k in missing), (missing, unexpected)
+        add_controls(cond, model)
+        del model
+        if on_condition_done is not None:
+            on_condition_done(results)
+
     for cond in todo:
         print(f"\n=== seed {seed} | {CONDITION_LABELS[cond]} ===")
         set_seed(seed)
+        # Fresh batch order per condition: the shared generator would otherwise have advanced
+        # through every earlier condition, so a condition's training would depend on run order.
+        train_loader.generator.manual_seed(seed)
         model = build(cond, args).to(device)
         trainable, frozen = count_params(model)
         print(f"  trainable params {trainable:,} | frozen params {frozen:,}")
@@ -197,15 +263,7 @@ def run_seed(seed: int, args, device, existing: dict = None, on_condition_done=N
         print(f"  --> test macro-F1 {results[cond]['macro_f1']:.4f}")
 
         if is_context:
-            # Average over several random permutations; a single permutation is noisy.
-            torch.manual_seed(seed)
-            shuffled = [full_metrics(model, test_loader, device, shuffle=True) for _ in range(args.shuffle_repeats)]
-            results[shuffled_key(cond)] = {
-                "macro_f1": float(np.mean([s["macro_f1"] for s in shuffled])),
-                "accuracy": float(np.mean([s["accuracy"] for s in shuffled])),
-                "trainable_params": 0,
-            }
-            print(f"  --> shuffled-control test macro-F1 {results[shuffled_key(cond)]['macro_f1']:.4f}")
+            add_controls(cond, model)
         del model
         if on_condition_done is not None:
             on_condition_done(results)
@@ -220,7 +278,8 @@ def run_seed(seed: int, args, device, existing: dict = None, on_condition_done=N
 def summarize(per_seed: dict, args) -> tuple:
     rows = []
     summary = {}
-    ordered = [*args.conditions, *(shuffled_key(c) for c in args.conditions if c in CONTEXT_CONDITIONS)]
+    ordered = [*args.conditions, *(k for c in args.conditions if c in CONTEXT_CONDITIONS for k in control_keys(c))]
+    ordered = [k for k in ordered if all(k in per_seed[s] for s in per_seed)]
     for cond in ordered:
         f1s = [per_seed[s][cond]["macro_f1"] for s in per_seed]
         first = per_seed[next(iter(per_seed))][cond]
@@ -262,8 +321,7 @@ def parse_args(argv=None):
     p.add_argument("--batch-size", type=int, default=64)
     p.add_argument("--llm", default=DEFAULT_LLM)
     p.add_argument("--llm-dim", type=int, default=960, help="hidden size used by the matched ablation")
-    p.add_argument("--gradient-checkpointing", action="store_true", help="trade compute for LLM activation memory")
-    p.add_argument("--shuffle-repeats", type=int, default=5)
+    p.add_argument("--shuffle-repeats", type=int, default=5, help="permutations for the global-shuffle control")
     p.add_argument("--no-standardize", action="store_true")
     p.add_argument("--no-resume", action="store_true", help="retrain seeds even if saved results exist")
     p.add_argument("--sensor-tokens", type=int, default=8, help="soft tokens for the multi-token conditions")
@@ -274,6 +332,42 @@ def parse_args(argv=None):
     if args.context_epochs is None:
         args.context_epochs = args.epochs
     return args
+
+
+def run_environment(args) -> dict:
+    """Versions, code commit, dataset fingerprint and model revision, saved with every run."""
+    import hashlib
+    import platform
+    import subprocess
+
+    import sklearn
+    import transformers
+
+    def git(*cmd):
+        try:
+            return subprocess.check_output(["git", *cmd], text=True, stderr=subprocess.DEVNULL).strip()
+        except Exception:
+            return None
+
+    digest = hashlib.sha256()
+    for split in ("train", "test"):
+        for name in (f"y_{split}.txt", f"subject_{split}.txt"):
+            path = os.path.join(args.data_dir, split, name)
+            if os.path.exists(path):
+                with open(path, "rb") as f:
+                    digest.update(f.read())
+    revision = None
+    try:
+        from huggingface_hub import model_info
+        revision = model_info(args.llm).sha
+    except Exception:
+        pass
+    return {
+        "python": platform.python_version(), "torch": torch.__version__, "cuda": torch.version.cuda,
+        "transformers": transformers.__version__, "scikit_learn": sklearn.__version__, "numpy": np.__version__,
+        "git_commit": git("rev-parse", "HEAD"), "git_dirty": bool(git("status", "--porcelain")),
+        "dataset_labels_sha256": digest.hexdigest(), "llm": args.llm, "llm_revision": revision,
+    }
 
 
 def run_key(args) -> dict:
@@ -297,8 +391,8 @@ def load_reusable(path: str, args) -> dict:
     for cond in CONDITIONS:
         if cond in results and results[cond].get("settings", {}) == condition_settings(cond, args):
             keep[cond] = results[cond]
-            if cond in CONTEXT_CONDITIONS and shuffled_key(cond) in results:
-                keep[shuffled_key(cond)] = results[shuffled_key(cond)]
+            if cond in CONTEXT_CONDITIONS:
+                keep.update({k: results[k] for k in control_keys(cond) if k in results})
     if "standardizer" in results:
         keep["standardizer"] = results["standardizer"]
     return keep
@@ -350,7 +444,8 @@ def main(argv=None):
 
     os.makedirs(args.out_dir, exist_ok=True)
     with open(os.path.join(args.out_dir, "results.json"), "w", encoding="utf-8") as f:
-        json.dump({"config": vars(args), "summary": summary, "per_seed": per_seed}, f, indent=2)
+        json.dump({"config": vars(args), "environment": run_environment(args), "summary": summary,
+                   "per_seed": per_seed}, f, indent=2)
     with open(os.path.join(args.out_dir, "results.md"), "w", encoding="utf-8") as f:
         f.write(table + "\n")
     print("\n" + table)

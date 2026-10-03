@@ -42,9 +42,9 @@ training curves for every run are in [`artifacts/results.json`](artifacts/result
 
 1. **A frozen LLM can consume raw sensor embeddings.** With no text serialization, one soft token reaches 0.924 macro-F1, within about 1 point of a dedicated CNN.
 2. **The predictions really come from the sensor.** Permuting sensor tokens across the batch cuts macro-F1 by 61% (0.924 → 0.362) with near-zero variance, so the LLM is not leaning on the prompt.
-3. **The frozen LLM adds no accuracy at matched capacity.** The identical trainable stack without the LLM scores 0.928 vs 0.924, a gap within seed-to-seed spread.
+3. **No improvement from the frozen LLM was observed at matched capacity in this experiment.** The identical trainable stack without the LLM scores 0.928 vs 0.924, a gap within seed-to-seed spread.
 4. **More sensor tokens do not help.** Eight temporal tokens match one pooled token (0.921 vs 0.924).
-5. **LoRA raises the ceiling but adds variance.** The adapted backbone produced the two best LLM runs (0.931, 0.932, beating the direct CNN on seed 43). On seed 44, the best-validation checkpoint (epoch 2) generalized poorly on Sitting vs Standing (test 0.883): with only 4 validation subjects, checkpoint selection is noisy, and the higher-capacity model is most exposed to it.
+5. **LoRA: two strong seeds, but a lower mean and higher variance.** The adapted backbone produced the two best LLM runs (0.931, 0.932, beating the direct CNN on seed 43). On seed 44, the best-validation checkpoint (epoch 2) generalized poorly on Sitting vs Standing (test 0.883): with only 4 validation subjects, checkpoint selection is noisy, and the higher-capacity model is most exposed to it.
 6. **Cost:** the LLM pathway is 57–72× slower per window and adds 1.4 GB of weights. For closed-set activity recognition a specialized encoder is the right tool; the LLM pathway earns its cost only when the task needs language (explanations, open-ended questions, reasoning over sensor context).
 
 Full method and discussion: [TECHNICAL_NOTE.md](TECHNICAL_NOTE.md).
@@ -91,10 +91,11 @@ python -m src.download_data           # UCI HAR → data/UCI HAR Dataset
 python -m pytest tests -v             # 25 tests, CPU only, no downloads
 python -m src.train                   # all 5 conditions × 3 seeds (≈2 h on an RTX 5060 Laptop GPU)
 python -m src.train --remeasure-latency   # re-time each architecture on an idle GPU
+python -m src.predict --condition direct --seed 42   # inference from a saved checkpoint
 ```
 
 - **Resumable:** results are saved after every condition. Rerunning skips finished work, and adding a condition trains only that condition.
-- **Faster runs:** use `--seeds 42 --conditions direct matched` for quick iteration, or `--gradient-checkpointing` for smaller GPUs.
+- **Faster runs:** use `--seeds 42 --conditions direct matched` for quick iteration.
 
 Outputs in `artifacts/`:
 - `results.md`: the summary table.
@@ -114,3 +115,7 @@ tests/              Gradient flow, LoRA, frozen backbone, splits, standardizatio
 artifacts/          Final results (tables, per-seed metrics)
 TECHNICAL_NOTE.md   Method, protocol, full results and discussion
 ```
+
+## License
+
+MIT, see [LICENSE](LICENSE).
