@@ -1,4 +1,5 @@
 {
+  "schema_version": 2,
   "run_key": {
     "data_dir": "data\\UCI HAR Dataset",
     "epochs": 15,
@@ -12,6 +13,30 @@
     "no_standardize": false
   },
   "results": {
+    "standardizer": {
+      "mean": [
+        0.8058244585990906,
+        0.029005322605371475,
+        0.08012132346630096,
+        -0.0007941430085338652,
+        -0.0002519475237932056,
+        -0.0003059437149204314,
+        0.004766484256833792,
+        -0.002092034788802266,
+        -0.000882287451531738
+      ],
+      "std": [
+        0.4103213846683502,
+        0.39971351623535156,
+        0.3540666103363037,
+        0.19705669581890106,
+        0.1265248954296112,
+        0.10837171226739883,
+        0.40885600447654724,
+        0.3830430507659912,
+        0.25839295983314514
+      ]
+    },
     "direct": {
       "macro_f1": 0.9369216584828113,
       "accuracy": 0.9362063115032236,
@@ -75,7 +100,25 @@
       ],
       "trainable_params": 146182,
       "frozen_params": 0,
-      "latency_ms": 0.440750000961998,
+      "latency_ms": 0.4963000010320684,
+      "latency_device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+      "settings": {},
+      "provenance": {
+        "schema_version": 2,
+        "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "trained_at": "2026-10-04T08:02:30+00:00",
+        "python": "3.14.6",
+        "torch": "2.14.1+cu130",
+        "cuda": "13.0",
+        "transformers": "5.18.0",
+        "scikit_learn": "1.9.1",
+        "numpy": "2.5.3",
+        "git_commit": "e9837dee4ccc41c312cd5690f505b1e27fc236b6",
+        "git_dirty": true,
+        "dataset_labels_sha256": "e51183a44b7747048ea53043bc1286862d1044d580efea9a24cef291d08bda2b",
+        "llm": "HuggingFaceTB/SmolLM2-360M-Instruct",
+        "llm_revision": "a10cc1512eabd3dde888204e902eca88bddb4951"
+      },
       "best_val_macro_f1": 0.9433242087883071,
       "best_epoch": 7,
       "history": [
@@ -157,199 +200,217 @@
       ]
     },
     "matched": {
-      "macro_f1": 0.9176323765369035,
-      "accuracy": 0.9165252799457075,
+      "macro_f1": 0.926062744712549,
+      "accuracy": 0.9246691550729556,
       "per_class_f1": {
-        "walking": 0.9836065573770492,
-        "walking_upstairs": 0.9404517453798767,
-        "walking_downstairs": 0.9494712103407755,
-        "sitting": 0.8196078431372549,
-        "standing": 0.8287401574803149,
-        "laying": 0.9839167455061495
-      },
-      "confusion_matrix": [
-        [
-          480,
-          2,
-          14,
-          0,
-          0,
-          0
-        ],
-        [
-          0,
-          458,
-          13,
-          0,
-          0,
-          0
-        ],
-        [
-          0,
-          16,
-          404,
-          0,
-          0,
-          0
-        ],
-        [
-          0,
-          10,
-          0,
-          418,
-          63,
-          0
-        ],
-        [
-          0,
-          0,
-          0,
-          111,
-          421,
-          0
-        ],
-        [
-          0,
-          17,
-          0,
-          0,
-          0,
-          520
-        ]
-      ],
-      "trainable_params": 1319686,
-      "frozen_params": 0,
-      "latency_ms": 0.45230000068841036,
-      "best_val_macro_f1": 0.9433264818435521,
-      "best_epoch": 4,
-      "history": [
-        {
-          "epoch": 1,
-          "train_loss": 0.2714397300277715,
-          "val_macro_f1": 0.943132612411261
-        },
-        {
-          "epoch": 2,
-          "train_loss": 0.11344084508069184,
-          "val_macro_f1": 0.9402636061601924
-        },
-        {
-          "epoch": 3,
-          "train_loss": 0.10966613495965367,
-          "val_macro_f1": 0.928866308179544
-        },
-        {
-          "epoch": 4,
-          "train_loss": 0.105253333043631,
-          "val_macro_f1": 0.9433264818435521
-        },
-        {
-          "epoch": 5,
-          "train_loss": 0.09925533104283006,
-          "val_macro_f1": 0.9310067317856143
-        },
-        {
-          "epoch": 6,
-          "train_loss": 0.10552420159396918,
-          "val_macro_f1": 0.9433264818435521
-        },
-        {
-          "epoch": 7,
-          "train_loss": 0.0888259935638179,
-          "val_macro_f1": 0.9213677978131766
-        },
-        {
-          "epoch": 8,
-          "train_loss": 0.08962180172903059,
-          "val_macro_f1": 0.9296159169511458
-        },
-        {
-          "epoch": 9,
-          "train_loss": 0.08395212809757693,
-          "val_macro_f1": 0.9234575364241376
-        },
-        {
-          "epoch": 10,
-          "train_loss": 0.07854144752997419,
-          "val_macro_f1": 0.9232844036491379
-        },
-        {
-          "epoch": 11,
-          "train_loss": 0.0790447060464193,
-          "val_macro_f1": 0.9260112569937008
-        },
-        {
-          "epoch": 12,
-          "train_loss": 0.07231465635477038,
-          "val_macro_f1": 0.9246822158413514
-        },
-        {
-          "epoch": 13,
-          "train_loss": 0.07359711295398681,
-          "val_macro_f1": 0.9240502360413139
-        },
-        {
-          "epoch": 14,
-          "train_loss": 0.06843194213149179,
-          "val_macro_f1": 0.9253133673560748
-        },
-        {
-          "epoch": 15,
-          "train_loss": 0.06847786814804473,
-          "val_macro_f1": 0.9259437039225098
-        }
-      ]
-    },
-    "context": {
-      "macro_f1": 0.919903614431352,
-      "accuracy": 0.9205972175093315,
-      "per_class_f1": {
-        "walking": 0.9959758551307847,
-        "walking_upstairs": 0.9451754385964912,
-        "walking_downstairs": 0.9522727272727273,
-        "sitting": 0.782707622298066,
-        "standing": 0.8432900432900433,
+        "walking": 0.9949849548645938,
+        "walking_upstairs": 0.9278579356270811,
+        "walking_downstairs": 0.9767441860465116,
+        "sitting": 0.8096618357487922,
+        "standing": 0.8471275559883155,
         "laying": 1.0
       },
       "confusion_matrix": [
         [
-          495,
+          496,
           0,
-          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          418,
+          20,
+          28,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          420,
           0,
           0,
           0
         ],
         [
           0,
-          431,
-          40,
-          0,
-          0,
-          0
-        ],
-        [
-          1,
+          12,
           0,
           419,
-          0,
-          0,
+          60,
           0
         ],
         [
-          1,
+          0,
+          0,
+          0,
+          97,
+          435,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          537
+        ]
+      ],
+      "trainable_params": 1319686,
+      "frozen_params": 0,
+      "latency_ms": 0.5293500016705366,
+      "latency_device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+      "settings": {},
+      "provenance": {
+        "schema_version": 2,
+        "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "trained_at": "2026-10-04T08:02:34+00:00",
+        "python": "3.14.6",
+        "torch": "2.14.1+cu130",
+        "cuda": "13.0",
+        "transformers": "5.18.0",
+        "scikit_learn": "1.9.1",
+        "numpy": "2.5.3",
+        "git_commit": "e9837dee4ccc41c312cd5690f505b1e27fc236b6",
+        "git_dirty": true,
+        "dataset_labels_sha256": "e51183a44b7747048ea53043bc1286862d1044d580efea9a24cef291d08bda2b",
+        "llm": "HuggingFaceTB/SmolLM2-360M-Instruct",
+        "llm_revision": "a10cc1512eabd3dde888204e902eca88bddb4951"
+      },
+      "best_val_macro_f1": 0.9359700225728479,
+      "best_epoch": 5,
+      "history": [
+        {
+          "epoch": 1,
+          "train_loss": 0.27321823214626184,
+          "val_macro_f1": 0.9330348135737402
+        },
+        {
+          "epoch": 2,
+          "train_loss": 0.12215455425093355,
+          "val_macro_f1": 0.9345326509208696
+        },
+        {
+          "epoch": 3,
+          "train_loss": 0.10573982003995258,
+          "val_macro_f1": 0.9249547438201491
+        },
+        {
+          "epoch": 4,
+          "train_loss": 0.10710441248248452,
+          "val_macro_f1": 0.9273597134838868
+        },
+        {
+          "epoch": 5,
+          "train_loss": 0.09739977746958965,
+          "val_macro_f1": 0.9359700225728479
+        },
+        {
+          "epoch": 6,
+          "train_loss": 0.09458949246808239,
+          "val_macro_f1": 0.9288718500582908
+        },
+        {
+          "epoch": 7,
+          "train_loss": 0.09704698812540459,
+          "val_macro_f1": 0.928514702186479
+        },
+        {
+          "epoch": 8,
+          "train_loss": 0.07917821745428702,
+          "val_macro_f1": 0.9272342114235569
+        },
+        {
+          "epoch": 9,
+          "train_loss": 0.08073598824684387,
+          "val_macro_f1": 0.9272342114235569
+        },
+        {
+          "epoch": 10,
+          "train_loss": 0.0824617869929289,
+          "val_macro_f1": 0.9272342114235569
+        },
+        {
+          "epoch": 11,
+          "train_loss": 0.07878401130437851,
+          "val_macro_f1": 0.9234575364241376
+        },
+        {
+          "epoch": 12,
+          "train_loss": 0.07532627185118264,
+          "val_macro_f1": 0.9253133673560748
+        },
+        {
+          "epoch": 13,
+          "train_loss": 0.07021138718878121,
+          "val_macro_f1": 0.9347085708038692
+        },
+        {
+          "epoch": 14,
+          "train_loss": 0.06538539817151816,
+          "val_macro_f1": 0.9251928078199265
+        },
+        {
+          "epoch": 15,
+          "train_loss": 0.06839989207725486,
+          "val_macro_f1": 0.9247196329129644
+        }
+      ]
+    },
+    "context": {
+      "macro_f1": 0.9294554037433526,
+      "accuracy": 0.9287410926365796,
+      "per_class_f1": {
+        "walking": 0.9868020304568528,
+        "walking_upstairs": 0.9587852494577006,
+        "walking_downstairs": 0.9541284403669725,
+        "sitting": 0.8386473429951691,
+        "standing": 0.8448448448448449,
+        "laying": 0.9935245143385754
+      },
+      "confusion_matrix": [
+        [
+          486,
+          0,
           10,
           0,
-          344,
-          136,
+          0,
           0
         ],
         [
-          1,
+          3,
+          442,
+          26,
           0,
           0,
-          44,
-          487,
+          0
+        ],
+        [
+          0,
+          4,
+          416,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          5,
+          0,
+          434,
+          45,
+          7
+        ],
+        [
+          0,
+          0,
+          0,
+          110,
+          422,
           0
         ],
         [
@@ -363,90 +424,173 @@
       ],
       "trainable_params": 1319686,
       "frozen_params": 361821120,
-      "latency_ms": 24.969500001134293,
-      "best_val_macro_f1": 0.9312285921444108,
-      "best_epoch": 4,
+      "latency_ms": 26.694349999161204,
+      "latency_device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+      "settings": {},
+      "provenance": {
+        "schema_version": 2,
+        "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "trained_at": "2026-10-04T08:37:07+00:00",
+        "python": "3.14.6",
+        "torch": "2.14.1+cu130",
+        "cuda": "13.0",
+        "transformers": "5.18.0",
+        "scikit_learn": "1.9.1",
+        "numpy": "2.5.3",
+        "git_commit": "e9837dee4ccc41c312cd5690f505b1e27fc236b6",
+        "git_dirty": true,
+        "dataset_labels_sha256": "e51183a44b7747048ea53043bc1286862d1044d580efea9a24cef291d08bda2b",
+        "llm": "HuggingFaceTB/SmolLM2-360M-Instruct",
+        "llm_revision": "a10cc1512eabd3dde888204e902eca88bddb4951"
+      },
+      "best_val_macro_f1": 0.9433264818435521,
+      "best_epoch": 5,
       "history": [
         {
           "epoch": 1,
-          "train_loss": 0.5501205198790716,
-          "val_macro_f1": 0.8915869864261433
+          "train_loss": 0.47771594365653786,
+          "val_macro_f1": 0.9251021324354659
         },
         {
           "epoch": 2,
-          "train_loss": 0.15486062563064953,
-          "val_macro_f1": 0.9264434726790117
+          "train_loss": 0.14089281529026187,
+          "val_macro_f1": 0.9194378167417381
         },
         {
           "epoch": 3,
-          "train_loss": 0.13478870128038462,
-          "val_macro_f1": 0.920454342067583
+          "train_loss": 0.13127596263328326,
+          "val_macro_f1": 0.935368735509185
         },
         {
           "epoch": 4,
-          "train_loss": 0.12196268449011057,
-          "val_macro_f1": 0.9312285921444108
+          "train_loss": 0.12359313610131326,
+          "val_macro_f1": 0.9281942018155931
         },
         {
           "epoch": 5,
-          "train_loss": 0.10589274353064272,
-          "val_macro_f1": 0.9279101149586185
+          "train_loss": 0.09846018651581329,
+          "val_macro_f1": 0.9433264818435521
         },
         {
           "epoch": 6,
-          "train_loss": 0.1028686263800963,
-          "val_macro_f1": 0.9109650319265913
+          "train_loss": 0.10200436802014061,
+          "val_macro_f1": 0.9346902111752726
         },
         {
           "epoch": 7,
-          "train_loss": 0.10432070359567423,
-          "val_macro_f1": 0.9266382339529519
+          "train_loss": 0.09665988045542137,
+          "val_macro_f1": 0.9308724734638917
         },
         {
           "epoch": 8,
-          "train_loss": 0.106641108210644,
-          "val_macro_f1": 0.924251764495667
+          "train_loss": 0.0839207635625549,
+          "val_macro_f1": 0.9347251730041096
         },
         {
           "epoch": 9,
-          "train_loss": 0.0840055325432964,
-          "val_macro_f1": 0.9239608693896021
+          "train_loss": 0.084878235751682,
+          "val_macro_f1": 0.9259068952585653
         },
         {
           "epoch": 10,
-          "train_loss": 0.08572945832882238,
-          "val_macro_f1": 0.9239356174839215
+          "train_loss": 0.08393598610089849,
+          "val_macro_f1": 0.9289864804369237
         },
         {
           "epoch": 11,
-          "train_loss": 0.08530048359914319,
-          "val_macro_f1": 0.9234955619034192
+          "train_loss": 0.08580410332702425,
+          "val_macro_f1": 0.9310067317856143
         },
         {
           "epoch": 12,
-          "train_loss": 0.07901325560701282,
-          "val_macro_f1": 0.924672005333132
+          "train_loss": 0.07851267576663067,
+          "val_macro_f1": 0.9282807106706478
         },
         {
           "epoch": 13,
-          "train_loss": 0.07372930901044089,
-          "val_macro_f1": 0.9266067355427344
+          "train_loss": 0.07430746450858272,
+          "val_macro_f1": 0.9370818857402964
         },
         {
           "epoch": 14,
-          "train_loss": 0.07490912948370627,
-          "val_macro_f1": 0.9245290995538981
+          "train_loss": 0.07171084135568337,
+          "val_macro_f1": 0.9275361628341786
         },
         {
           "epoch": 15,
-          "train_loss": 0.07319352311669322,
-          "val_macro_f1": 0.9247196329129644
+          "train_loss": 0.07443006123092187,
+          "val_macro_f1": 0.9308399879606909
         }
       ]
     },
-    "shuffled": {
-      "macro_f1": 0.36043910141587154,
-      "accuracy": 0.3637597556837462,
+    "context_shuffled_global": {
+      "macro_f1": 0.16488559241567322,
+      "macro_f1_std_over_permutations": 0.0018667849989009741,
+      "accuracy": 0.1657278588394978,
+      "permutations": 5,
+      "trainable_params": 0
+    },
+    "context_zero": {
+      "macro_f1": 0.047605196819856505,
+      "accuracy": 0.166610111978283,
+      "per_class_f1": {
+        "walking": 0.0,
+        "walking_upstairs": 0.0,
+        "walking_downstairs": 0.0,
+        "sitting": 0.285631180919139,
+        "standing": 0.0,
+        "laying": 0.0
+      },
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          496,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          471,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          420,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          491,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          532,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          537,
+          0,
+          0
+        ]
+      ],
       "trainable_params": 0
     },
     "context_mt": {
@@ -512,9 +656,26 @@
       ],
       "trainable_params": 1319686,
       "frozen_params": 361821120,
-      "latency_ms": 25.968400000238034,
+      "latency_ms": 27.338350000718492,
+      "latency_device": "NVIDIA GeForce RTX 5060 Laptop GPU",
       "settings": {
         "sensor_tokens": 8
+      },
+      "provenance": {
+        "schema_version": 2,
+        "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "trained_at": "2026-10-04T09:22:13+00:00",
+        "python": "3.14.6",
+        "torch": "2.14.1+cu130",
+        "cuda": "13.0",
+        "transformers": "5.18.0",
+        "scikit_learn": "1.9.1",
+        "numpy": "2.5.3",
+        "git_commit": "e9837dee4ccc41c312cd5690f505b1e27fc236b6",
+        "git_dirty": true,
+        "dataset_labels_sha256": "e51183a44b7747048ea53043bc1286862d1044d580efea9a24cef291d08bda2b",
+        "llm": "HuggingFaceTB/SmolLM2-360M-Instruct",
+        "llm_revision": "a10cc1512eabd3dde888204e902eca88bddb4951"
       },
       "best_val_macro_f1": 0.9451405418416196,
       "best_epoch": 5,
@@ -596,35 +757,100 @@
         }
       ]
     },
-    "context_mt_shuffled": {
-      "macro_f1": 0.36162836781289154,
-      "accuracy": 0.3636918900576858,
+    "context_mt_shuffled_global": {
+      "macro_f1": 0.1646200917330803,
+      "macro_f1_std_over_permutations": 0.001508883233953083,
+      "accuracy": 0.1656599932134374,
+      "permutations": 5,
       "trainable_params": 0
     },
-    "context_lora": {
-      "macro_f1": 0.8833942879328797,
-      "accuracy": 0.8876823888700374,
+    "context_mt_zero": {
+      "macro_f1": 0.047605196819856505,
+      "accuracy": 0.166610111978283,
       "per_class_f1": {
-        "walking": 0.9650924024640657,
-        "walking_upstairs": 0.9409141583054627,
-        "walking_downstairs": 0.9249448123620309,
-        "sitting": 0.6684005201560468,
-        "standing": 0.8047244094488188,
-        "laying": 0.9962894248608535
+        "walking": 0.0,
+        "walking_upstairs": 0.0,
+        "walking_downstairs": 0.0,
+        "sitting": 0.285631180919139,
+        "standing": 0.0,
+        "laying": 0.0
       },
       "confusion_matrix": [
         [
-          470,
           0,
-          26,
+          0,
+          0,
+          496,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          471,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          420,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          491,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          532,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          537,
+          0,
+          0
+        ]
+      ],
+      "trainable_params": 0
+    },
+    "context_lora": {
+      "macro_f1": 0.9325755387342527,
+      "accuracy": 0.9317950458092976,
+      "per_class_f1": {
+        "walking": 0.991869918699187,
+        "walking_upstairs": 0.9602577873254565,
+        "walking_downstairs": 0.9621125143513203,
+        "sitting": 0.8326693227091634,
+        "standing": 0.8485436893203884,
+        "laying": 1.0
+      },
+      "confusion_matrix": [
+        [
+          488,
+          0,
+          8,
           0,
           0,
           0
         ],
         [
-          8,
-          422,
-          41,
+          0,
+          447,
+          24,
           0,
           0,
           0
@@ -639,18 +865,18 @@
         ],
         [
           0,
-          3,
+          12,
           0,
-          257,
-          227,
-          4
+          418,
+          61,
+          0
         ],
         [
           0,
           0,
           0,
-          21,
-          511,
+          95,
+          437,
           0
         ],
         [
@@ -664,119 +890,177 @@
       ],
       "trainable_params": 2138886,
       "frozen_params": 361821120,
-      "latency_ms": 31.832000000576954,
+      "latency_ms": 63.69809999887366,
+      "latency_device": "NVIDIA GeForce RTX 5060 Laptop GPU",
       "settings": {
         "sensor_tokens": 8,
         "lora_r": 8
       },
-      "best_val_macro_f1": 0.9502621386601291,
-      "best_epoch": 2,
+      "provenance": {
+        "schema_version": 2,
+        "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "trained_at": "2026-10-04T10:37:16+00:00",
+        "python": "3.14.6",
+        "torch": "2.14.1+cu130",
+        "cuda": "13.0",
+        "transformers": "5.18.0",
+        "scikit_learn": "1.9.1",
+        "numpy": "2.5.3",
+        "git_commit": "e9837dee4ccc41c312cd5690f505b1e27fc236b6",
+        "git_dirty": true,
+        "dataset_labels_sha256": "e51183a44b7747048ea53043bc1286862d1044d580efea9a24cef291d08bda2b",
+        "llm": "HuggingFaceTB/SmolLM2-360M-Instruct",
+        "llm_revision": "a10cc1512eabd3dde888204e902eca88bddb4951"
+      },
+      "best_val_macro_f1": 0.9439349376114082,
+      "best_epoch": 5,
       "history": [
         {
           "epoch": 1,
-          "train_loss": 0.4368043592118699,
-          "val_macro_f1": 0.9365375209220242
+          "train_loss": 0.36046443498976855,
+          "val_macro_f1": 0.932837405086031
         },
         {
           "epoch": 2,
-          "train_loss": 0.13362857930200256,
-          "val_macro_f1": 0.9502621386601291
+          "train_loss": 0.12738834530034143,
+          "val_macro_f1": 0.9315565565565566
         },
         {
           "epoch": 3,
-          "train_loss": 0.11145347759694509,
-          "val_macro_f1": 0.9306247557188
+          "train_loss": 0.11125532446591102,
+          "val_macro_f1": 0.9267443417704567
         },
         {
           "epoch": 4,
-          "train_loss": 0.10828428255880009,
-          "val_macro_f1": 0.9481683628025092
+          "train_loss": 0.10365823605705214,
+          "val_macro_f1": 0.9345368739556519
         },
         {
           "epoch": 5,
-          "train_loss": 0.10276000597514212,
-          "val_macro_f1": 0.9352448563540081
+          "train_loss": 0.09611105173826218,
+          "val_macro_f1": 0.9439349376114082
         },
         {
           "epoch": 6,
-          "train_loss": 0.10128210482956923,
-          "val_macro_f1": 0.9424358943042156
+          "train_loss": 0.09586776309120267,
+          "val_macro_f1": 0.9389536181420474
         },
         {
           "epoch": 7,
-          "train_loss": 0.08620001485004374,
-          "val_macro_f1": 0.9351692830627488
+          "train_loss": 0.10874687285041032,
+          "val_macro_f1": 0.9393301294301928
         },
         {
           "epoch": 8,
-          "train_loss": 0.09043773629135736,
-          "val_macro_f1": 0.9339159149484536
+          "train_loss": 0.09691664153386069,
+          "val_macro_f1": 0.9427130684350322
         },
         {
           "epoch": 9,
-          "train_loss": 0.08354161625080135,
-          "val_macro_f1": 0.92760265245325
+          "train_loss": 0.08664815408258658,
+          "val_macro_f1": 0.9289864804369237
         },
         {
           "epoch": 10,
-          "train_loss": 0.07984798786270877,
-          "val_macro_f1": 0.9313633226676705
+          "train_loss": 0.08256022683749704,
+          "val_macro_f1": 0.9283562540929928
         },
         {
           "epoch": 11,
-          "train_loss": 0.08052069745431452,
-          "val_macro_f1": 0.9414550611403955
+          "train_loss": 0.07921489092278415,
+          "val_macro_f1": 0.931628052319093
         },
         {
           "epoch": 12,
-          "train_loss": 0.0699673909795187,
-          "val_macro_f1": 0.940825624125221
+          "train_loss": 0.07550161996977808,
+          "val_macro_f1": 0.9364913502844537
         },
         {
           "epoch": 13,
-          "train_loss": 0.07118500183012498,
-          "val_macro_f1": 0.9295440214061627
+          "train_loss": 0.07347648058329588,
+          "val_macro_f1": 0.9371653534525543
         },
         {
           "epoch": 14,
-          "train_loss": 0.06515166744508821,
-          "val_macro_f1": 0.9326921355956471
+          "train_loss": 0.06564806805640135,
+          "val_macro_f1": 0.9358465276032505
         },
         {
           "epoch": 15,
-          "train_loss": 0.06575807123242514,
-          "val_macro_f1": 0.9326921355956471
+          "train_loss": 0.06795088109641295,
+          "val_macro_f1": 0.9346902111752726
         }
       ]
     },
-    "context_lora_shuffled": {
-      "macro_f1": 0.34807572102732337,
-      "accuracy": 0.3542585680352901,
+    "context_lora_shuffled_global": {
+      "macro_f1": 0.16472524415803985,
+      "macro_f1_std_over_permutations": 0.002855863941223156,
+      "accuracy": 0.1655242619613166,
+      "permutations": 5,
       "trainable_params": 0
     },
-    "standardizer": {
-      "mean": [
-        0.8058244585990906,
-        0.029005322605371475,
-        0.08012132346630096,
-        -0.0007941430085338652,
-        -0.0002519475237932056,
-        -0.0003059437149204314,
-        0.004766484256833792,
-        -0.002092034788802266,
-        -0.000882287451531738
+    "context_lora_zero": {
+      "macro_f1": 0.05137772675086108,
+      "accuracy": 0.18221920597217509,
+      "per_class_f1": {
+        "walking": 0.0,
+        "walking_upstairs": 0.0,
+        "walking_downstairs": 0.0,
+        "sitting": 0.0,
+        "standing": 0.0,
+        "laying": 0.3082663605051665
+      },
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          496
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          471
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          420
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          491
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          532
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          537
+        ]
       ],
-      "std": [
-        0.4103213846683502,
-        0.39971351623535156,
-        0.3540666103363037,
-        0.19705669581890106,
-        0.1265248954296112,
-        0.10837171226739883,
-        0.40885600447654724,
-        0.3830430507659912,
-        0.25839295983314514
-      ]
+      "trainable_params": 0
     }
   }
 }

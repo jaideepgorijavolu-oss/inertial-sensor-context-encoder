@@ -12,10 +12,10 @@ test whether the LLM is actually using the sensor input.
 
 **Highlights**
 
-- **0.92 macro-F1 from a frozen 360M LLM** reading raw IMU embeddings directly, on unseen subjects
-- **Sensor-dependence controls:** a global shuffle that pairs every test label with an unrelated window, and a zeroed-sensor input
+- **0.933 macro-F1 from a frozen 360M LLM** reading raw IMU embeddings directly, on unseen subjects, matching a dedicated CNN (0.934); LoRA reaches 0.934 ± 0.002
+- **Proven sensor dependence:** a global shuffle that pairs every test label with an unrelated window drops every LLM model to chance (0.16), and zeroed sensor tokens to 0.05
 - **Rigorous comparison:** parameter-matched no-LLM ablation, frozen vs **LoRA-adapted** backbone, 1 vs 8 temporal sensor tokens, equal epoch budgets, 3 seeds
-- **Bug found and fixed:** a `torch.no_grad()` around the frozen LLM had silently blocked gradients to the encoder; fixing it raised the LLM model from 0.513 to 0.924 macro-F1
+- **Bug found and fixed:** a `torch.no_grad()` around the frozen LLM had silently blocked gradients to the encoder; fixing it raised the LLM model from 0.513 to over 0.92 macro-F1
 - **Reproducible runs:** per-condition seeding independent of run order, versioned result cache with per-condition provenance (commit, environment, model revision), safe resume after interruption
 - **33 tests** run in seconds on CPU with a tiny random Llama: gradient flow, frozen-weight and LoRA-only training, checkpoint snapshots, leakage-free splits, end-to-end CLI and resume
 
@@ -23,31 +23,30 @@ test whether the LLM is actually using the sensor input.
 
 ## Results
 
-> **Historical results.** These numbers were produced before two fixes: the shuffled control permuted sensor tokens only within 64-window batches (the test set is ordered by subject and activity, so this is not a chance-level control), and every condition after the first in a run trained on a batch order that depended on the conditions before it. They are kept for reference until the full rerun (`python -m src.train --no-resume`) replaces them.
-
-UCI HAR, subject-disjoint evaluation (test = the 9 official test subjects). 3 seeds × 15 epochs per condition,
-NVIDIA RTX 5060 Laptop GPU. Latency = median single-window inference over 100 runs on an idle GPU.
+UCI HAR, subject-disjoint evaluation (test = the 9 official test subjects). 3 seeds × 15 epochs per condition, NVIDIA RTX 5060 Laptop GPU, full rerun with the current code (`python -m src.train --no-resume`). Latency = median single-window inference measured at the end of each training run. Controls are mean over 3 seeds; the global shuffle averages 5 seeded permutations per seed.
 
 | Condition | Test Macro-F1 (mean ± std) | Per seed (42 / 43 / 44) | Trainable params | Latency |
 | :--- | :--- | :--- | ---: | ---: |
-| Direct CNN classifier | **0.934 ± 0.006** | 0.937 / 0.927 / 0.937 | 146K | 0.44 ms |
-| Matched capacity, no LLM | 0.928 ± 0.010 | 0.937 / 0.929 / 0.918 | 1.32M | 0.45 ms |
-| Frozen LLM, 1 sensor token | 0.924 ± 0.006 | 0.921 / 0.930 / 0.920 | 1.32M | 25.0 ms |
-| Frozen LLM, 8 sensor tokens | 0.921 ± 0.011 | 0.925 / 0.908 / 0.929 | 1.32M | 26.0 ms |
-| LLM + LoRA (r=8), 8 tokens | 0.916 ± 0.028 | **0.931 / 0.932** / 0.883 | 2.14M | 31.8 ms |
-| Shuffled-token controls (historical batch-local shuffle, not chance-level) | 0.359 – 0.362 | | | |
+| Direct CNN classifier | **0.934 ± 0.006** | 0.937 / 0.927 / 0.937 | 146K | 0.49 ms |
+| Matched capacity, no LLM | 0.925 ± 0.013 | 0.911 / 0.938 / 0.926 | 1.32M | 0.89 ms |
+| Frozen LLM, 1 sensor token | 0.933 ± 0.003 | 0.935 / 0.935 / 0.929 | 1.32M | 29.0 ms |
+| Frozen LLM, 8 sensor tokens | 0.921 ± 0.011 | 0.925 / 0.908 / 0.929 | 1.32M | 29.8 ms |
+| LLM + LoRA (r=8), 8 tokens | **0.934 ± 0.002** | 0.933 / 0.936 / 0.933 | 2.14M | 30.1 ms |
+| Global-shuffle control (all LLM models) | 0.163 – 0.164 | | | |
+| Zero-sensor control (all LLM models) | 0.048 – 0.050 | | | |
 
-The LLM conditions additionally carry 361.8M frozen backbone parameters. Per-class F1, confusion matrices and
-training curves for every run are in [`artifacts/results.json`](artifacts/results.json).
+The LLM conditions additionally carry 361.8M frozen backbone parameters. Per-class F1, confusion matrices, training curves and per-condition provenance are in [`artifacts/results.json`](artifacts/results.json).
 
 ### Findings
 
-1. **A frozen LLM can consume raw sensor embeddings.** With no text serialization, one soft token reaches 0.924 macro-F1, within about 1 point of a dedicated CNN.
-2. **The predictions really come from the sensor (historical control, to be replaced by the global shuffle).** Permuting sensor tokens within each batch cuts macro-F1 by 61% (0.924 → 0.362) with near-zero variance, so the LLM is not leaning on the prompt.
-3. **No improvement from the frozen LLM was observed at matched capacity in this experiment.** The identical trainable stack without the LLM scores 0.928 vs 0.924, a gap within seed-to-seed spread.
-4. **More sensor tokens do not help.** Eight temporal tokens match one pooled token (0.921 vs 0.924).
-5. **LoRA: two strong seeds, but a lower mean and higher variance.** The adapted backbone produced the two best LLM runs (0.931, 0.932, beating the direct CNN on seed 43). On seed 44, the best-validation checkpoint (epoch 2) generalized poorly on Sitting vs Standing (test 0.883): with only 4 validation subjects, checkpoint selection is noisy, and the higher-capacity model is most exposed to it.
-6. **Cost:** the LLM pathway is 57–72× slower per window and adds 1.4 GB of weights. For closed-set activity recognition a specialized encoder is the right tool; the LLM pathway earns its cost only when the task needs language (explanations, open-ended questions, reasoning over sensor context).
+1. **A frozen LLM reading raw sensor embeddings matches a dedicated CNN.** One soft token into frozen SmolLM2-360M reaches 0.933 ± 0.003 macro-F1, statistically indistinguishable from the direct CNN (0.934 ± 0.006).
+2. **Predictions depend on the sensor input.** Pairing every test label with an unrelated window (global shuffle) drops every LLM model to 0.163–0.164 macro-F1, chance level for 6 classes; replacing the sensor tokens with zeros gives 0.048–0.050 (a single constant prediction). The prompt alone carries no class information.
+3. **LoRA gives the most stable LLM result.** Rank-8 adapters reach 0.934 ± 0.002, tying the CNN with the lowest seed-to-seed variance of any condition.
+4. **No clear gain from the LLM at matched capacity.** The frozen-LLM and LoRA models score about 0.8 points above the parameter-matched network without the LLM (0.925 ± 0.013), but the gap is within its seed-to-seed spread across 3 seeds.
+5. **More sensor tokens do not help.** Eight temporal tokens (0.921 ± 0.011) score below one pooled token.
+6. **Cost:** the LLM pathway is about 60× slower per window (29–30 ms vs 0.49 ms) and adds 1.4 GB of weights. For closed-set activity recognition a specialized encoder is the efficient choice; the LLM pathway earns its cost when the task needs language (explanations, open-ended questions, reasoning over sensor context).
+
+> An earlier version of these results (before the per-condition batch-order fix and the global-shuffle control) reported a batch-local shuffle control of about 0.36 and a LoRA seed at 0.883. With the fixes, the conditions that trained first in their runs (direct CNN, 8-token frozen) reproduced exactly; the others changed as listed above, and the LoRA outlier did not recur.
 
 Full method and discussion: [TECHNICAL_NOTE.md](TECHNICAL_NOTE.md).
 
@@ -92,7 +91,7 @@ pip install -r requirements.txt       # for NVIDIA GPUs install the CUDA build o
 python -m src.download_data           # UCI HAR → data/UCI HAR Dataset
 
 python -m pytest tests -v             # 33 tests, CPU only, no downloads
-python -m src.train                   # all 5 conditions × 3 seeds (≈2 h on an RTX 5060 Laptop GPU)
+python -m src.train                   # all 5 conditions × 3 seeds (≈2–3 h on an RTX 5060 Laptop GPU at full power)
 python -m src.train --remeasure-latency   # re-time each architecture on an idle GPU
 python -m src.predict --condition direct --seed 42   # inference from a saved checkpoint
 ```
