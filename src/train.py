@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import json
 import os
 import random
@@ -211,6 +212,12 @@ def run_seed(seed: int, args, device, existing: dict = None, on_condition_done=N
     refill = [c for c in args.conditions if c in results and c in CONTEXT_CONDITIONS
               and any(k not in results for k in control_keys(c))
               and os.path.exists(os.path.join(out_dir, f"best_{c}.pt"))]
+    stuck = [c for c in args.conditions if c in results and c in CONTEXT_CONDITIONS
+             and any(k not in results for k in control_keys(c)) and c not in refill]
+    if stuck:
+        raise RuntimeError(
+            f"seed {seed}: cached results for {stuck} lack their control metrics and the checkpoints "
+            f"needed to compute them are missing from {out_dir}; rerun with --no-resume to retrain")
     if not todo and not refill:
         return results
     set_seed(seed)
@@ -218,6 +225,9 @@ def run_seed(seed: int, args, device, existing: dict = None, on_condition_done=N
         data_dir=args.data_dir, batch_size=args.batch_size, val_subjects=DEFAULT_VAL_SUBJECTS,
         standardize=not args.no_standardize, seed=seed,
     )
+    # Saved with the first per-condition checkpoint, so an interrupted run can still be loaded.
+    if scaler is not None:
+        results["standardizer"] = scaler.state_dict()
 
     def add_controls(cond, model):
         controls = control_metrics(model, test_loader, device, seed, args.shuffle_repeats)
@@ -257,7 +267,9 @@ def run_seed(seed: int, args, device, existing: dict = None, on_condition_done=N
             "trainable_params": trainable,
             "frozen_params": frozen,
             "latency_ms": latency_ms_per_window(model, device),
+            "latency_device": args.device_name,
             "settings": condition_settings(cond, args),
+            "provenance": training_provenance(args),
             **train_info,
         }
         print(f"  --> test macro-F1 {results[cond]['macro_f1']:.4f}")
@@ -270,8 +282,6 @@ def run_seed(seed: int, args, device, existing: dict = None, on_condition_done=N
         if device.type == "cuda":
             torch.cuda.empty_cache()
 
-    if scaler is not None:
-        results["standardizer"] = scaler.state_dict()
     return results
 
 
@@ -279,7 +289,9 @@ def summarize(per_seed: dict, args) -> tuple:
     rows = []
     summary = {}
     ordered = [*args.conditions, *(k for c in args.conditions if c in CONTEXT_CONDITIONS for k in control_keys(c))]
-    ordered = [k for k in ordered if all(k in per_seed[s] for s in per_seed)]
+    missing = [(s, k) for k in ordered for s in per_seed if k not in per_seed[s]]
+    if missing:
+        raise RuntimeError(f"results incomplete, missing (seed, key): {missing}")
     for cond in ordered:
         f1s = [per_seed[s][cond]["macro_f1"] for s in per_seed]
         first = per_seed[next(iter(per_seed))][cond]
@@ -299,7 +311,9 @@ def summarize(per_seed: dict, args) -> tuple:
     table = "\n".join([
         f"Seeds: {list(per_seed)} | epochs: {args.epochs} (context: {args.context_epochs}) | "
         f"sensor tokens (multi-token): {args.sensor_tokens} | LoRA rank: {args.lora_r} | "
-        f"standardized inputs: {not args.no_standardize} | device: {args.device_name}",
+        f"standardized inputs: {not args.no_standardize} | trained on: "
+        f"{sorted({str(per_seed[s][c].get('latency_device')) for s in per_seed for c in args.conditions})} | "
+        f"report generated on: {args.device_name}",
         "",
         "| Condition | Test Macro-F1 (mean ± std) | Trainable params | Latency ms/window |",
         "| :--- | :--- | ---: | ---: |",
@@ -358,6 +372,8 @@ def run_environment(args) -> dict:
                     digest.update(f.read())
     revision = None
     try:
+        if os.environ.get("HF_HUB_OFFLINE") == "1":
+            raise RuntimeError("offline")
         from huggingface_hub import model_info
         revision = model_info(args.llm).sha
     except Exception:
@@ -368,6 +384,20 @@ def run_environment(args) -> dict:
         "git_commit": git("rev-parse", "HEAD"), "git_dirty": bool(git("status", "--porcelain")),
         "dataset_labels_sha256": digest.hexdigest(), "llm": args.llm, "llm_revision": revision,
     }
+
+
+# Bump whenever a change makes earlier cached results incompatible. Version 2: per-condition
+# DataLoader reseeding and the global-shuffle / zero-sensor controls.
+SCHEMA_VERSION = 2
+
+
+def training_provenance(args) -> dict:
+    """Where and how a condition was trained; kept unchanged whenever its results are reused."""
+    if getattr(args, "_train_env", None) is None:
+        args._train_env = run_environment(args)
+    return {"schema_version": SCHEMA_VERSION, "device": getattr(args, "device_name", None),
+            "trained_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+            **args._train_env}
 
 
 def run_key(args) -> dict:
@@ -383,6 +413,12 @@ def load_reusable(path: str, args) -> dict:
         return {}
     with open(path, encoding="utf-8") as f:
         saved = json.load(f)
+    if saved.get("schema_version") != SCHEMA_VERSION:
+        print(f"Ignoring {path}: cache schema {saved.get('schema_version')} != {SCHEMA_VERSION} (retraining)")
+        return {}
+    if not args.no_standardize and "standardizer" not in saved.get("results", {}):
+        print(f"Ignoring {path}: standardized run without saved normalization statistics (retraining)")
+        return {}
     key = run_key(args)
     if any(saved.get("run_key", {}).get(k) != v for k, v in key.items()):
         return {}
@@ -396,6 +432,12 @@ def load_reusable(path: str, args) -> dict:
     if "standardizer" in results:
         keep["standardizer"] = results["standardizer"]
     return keep
+
+
+def save_metrics(path: str, results: dict, args) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"schema_version": SCHEMA_VERSION, "run_key": run_key(args), "results": results}, f, indent=2)
 
 
 def main(argv=None):
@@ -415,9 +457,7 @@ def main(argv=None):
             print(f"Seed {seed}: reusing {reused} from {path}")
 
         def save(results, path=path):
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump({"run_key": run_key(args), "results": results}, f, indent=2)
+            save_metrics(path, results, args)
 
         per_seed[seed] = run_seed(seed, args, device, existing, on_condition_done=save)
         save(per_seed[seed])
@@ -432,19 +472,19 @@ def main(argv=None):
             print(f"latency {CONDITION_LABELS[cond]}: {lat:.2f} ms/window")
             for seed in per_seed:
                 per_seed[seed][cond]["latency_ms"] = lat
+                per_seed[seed][cond]["latency_device"] = args.device_name
             del model
             if device.type == "cuda":
                 torch.cuda.empty_cache()
         for seed in per_seed:
-            path = os.path.join(args.out_dir, f"seed{seed}", "metrics.json")
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump({"run_key": run_key(args), "results": per_seed[seed]}, f, indent=2)
+            save_metrics(os.path.join(args.out_dir, f"seed{seed}", "metrics.json"), per_seed[seed], args)
 
     summary, table = summarize(per_seed, args)
 
     os.makedirs(args.out_dir, exist_ok=True)
     with open(os.path.join(args.out_dir, "results.json"), "w", encoding="utf-8") as f:
-        json.dump({"config": vars(args), "environment": run_environment(args), "summary": summary,
+        config = {k: v for k, v in vars(args).items() if not k.startswith("_")}
+        json.dump({"config": config, "report_environment": run_environment(args), "summary": summary,
                    "per_seed": per_seed}, f, indent=2)
     with open(os.path.join(args.out_dir, "results.md"), "w", encoding="utf-8") as f:
         f.write(table + "\n")
