@@ -25,7 +25,11 @@ def load_model(out_dir: str, condition: str, seed: int, device: torch.device):
     state = torch.load(os.path.join(out_dir, f"seed{seed}", f"best_{condition}.pt"), map_location=device)
     missing, unexpected = model.load_state_dict(state, strict=False)
     assert not unexpected and all(k.startswith("llm.") for k in missing), (missing, unexpected)
-    stats = run["per_seed"][str(seed)]["standardizer"]
+    if cfg.get("no_standardize"):
+        return model.eval(), None, None
+    stats = run["per_seed"][str(seed)].get("standardizer")
+    if stats is None:
+        raise RuntimeError(f"run in {out_dir} was standardized but has no saved statistics for seed {seed}")
     mean = np.asarray(stats["mean"], dtype=np.float32).reshape(1, 1, -1)
     std = np.asarray(stats["std"], dtype=np.float32).reshape(1, 1, -1)
     return model.eval(), mean, std
@@ -34,7 +38,9 @@ def load_model(out_dir: str, condition: str, seed: int, device: torch.device):
 @torch.no_grad()
 def classify(model, windows: np.ndarray, mean, std, device) -> list:
     """windows: [N, 128, 9] raw inertial signals in the UCI HAR channel order."""
-    x = torch.tensor((windows - mean) / (std + 1e-6), dtype=torch.float32, device=device)
+    if mean is not None:
+        windows = (windows - mean) / (std + 1e-6)
+    x = torch.tensor(windows, dtype=torch.float32, device=device)
     return [ACTIVITY_NAMES[i] for i in model(x).argmax(dim=-1).tolist()]
 
 

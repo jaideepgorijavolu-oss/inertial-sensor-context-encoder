@@ -13,15 +13,17 @@ test whether the LLM is actually using the sensor input.
 **Highlights**
 
 - **0.92 macro-F1 from a frozen 360M LLM** reading raw IMU embeddings directly, on unseen subjects
-- **Proven sensor dependence:** shuffling sensor tokens across the batch drops every LLM variant to ≈0.36 (chance ≈ 0.17)
+- **Sensor-dependence controls:** a global shuffle that pairs every test label with an unrelated window, and a zeroed-sensor input
 - **Rigorous comparison:** parameter-matched no-LLM ablation, frozen vs **LoRA-adapted** backbone, 1 vs 8 temporal sensor tokens, equal epoch budgets, 3 seeds
 - **Bug found and fixed:** a `torch.no_grad()` around the frozen LLM had silently blocked gradients to the encoder; fixing it raised the LLM model from 0.513 to 0.924 macro-F1
-- **Reproducible:** retraining reproduces identical test scores; results are written per condition and runs resume after interruption
-- **25 tests** run in seconds on CPU with a tiny random Llama: gradient flow, frozen-weight and LoRA-only training, checkpoint snapshots, leakage-free splits, end-to-end CLI and resume
+- **Reproducible runs:** per-condition seeding independent of run order, versioned result cache with per-condition provenance (commit, environment, model revision), safe resume after interruption
+- **33 tests** run in seconds on CPU with a tiny random Llama: gradient flow, frozen-weight and LoRA-only training, checkpoint snapshots, leakage-free splits, end-to-end CLI and resume
 
 ---
 
 ## Results
+
+> **Historical results.** These numbers were produced before two fixes: the shuffled control permuted sensor tokens only within 64-window batches (the test set is ordered by subject and activity, so this is not a chance-level control), and every condition after the first in a run trained on a batch order that depended on the conditions before it. They are kept for reference until the full rerun (`python -m src.train --no-resume`) replaces them.
 
 UCI HAR, subject-disjoint evaluation (test = the 9 official test subjects). 3 seeds × 15 epochs per condition,
 NVIDIA RTX 5060 Laptop GPU. Latency = median single-window inference over 100 runs on an idle GPU.
@@ -33,7 +35,7 @@ NVIDIA RTX 5060 Laptop GPU. Latency = median single-window inference over 100 ru
 | Frozen LLM, 1 sensor token | 0.924 ± 0.006 | 0.921 / 0.930 / 0.920 | 1.32M | 25.0 ms |
 | Frozen LLM, 8 sensor tokens | 0.921 ± 0.011 | 0.925 / 0.908 / 0.929 | 1.32M | 26.0 ms |
 | LLM + LoRA (r=8), 8 tokens | 0.916 ± 0.028 | **0.931 / 0.932** / 0.883 | 2.14M | 31.8 ms |
-| Shuffled-token controls | 0.359 – 0.362 | | | |
+| Shuffled-token controls (historical batch-local shuffle, not chance-level) | 0.359 – 0.362 | | | |
 
 The LLM conditions additionally carry 361.8M frozen backbone parameters. Per-class F1, confusion matrices and
 training curves for every run are in [`artifacts/results.json`](artifacts/results.json).
@@ -41,7 +43,7 @@ training curves for every run are in [`artifacts/results.json`](artifacts/result
 ### Findings
 
 1. **A frozen LLM can consume raw sensor embeddings.** With no text serialization, one soft token reaches 0.924 macro-F1, within about 1 point of a dedicated CNN.
-2. **The predictions really come from the sensor.** Permuting sensor tokens across the batch cuts macro-F1 by 61% (0.924 → 0.362) with near-zero variance, so the LLM is not leaning on the prompt.
+2. **The predictions really come from the sensor (historical control, to be replaced by the global shuffle).** Permuting sensor tokens within each batch cuts macro-F1 by 61% (0.924 → 0.362) with near-zero variance, so the LLM is not leaning on the prompt.
 3. **No improvement from the frozen LLM was observed at matched capacity in this experiment.** The identical trainable stack without the LLM scores 0.928 vs 0.924, a gap within seed-to-seed spread.
 4. **More sensor tokens do not help.** Eight temporal tokens match one pooled token (0.921 vs 0.924).
 5. **LoRA: two strong seeds, but a lower mean and higher variance.** The adapted backbone produced the two best LLM runs (0.931, 0.932, beating the direct CNN on seed 43). On seed 44, the best-validation checkpoint (epoch 2) generalized poorly on Sitting vs Standing (test 0.883): with only 4 validation subjects, checkpoint selection is noisy, and the higher-capacity model is most exposed to it.
@@ -68,7 +70,8 @@ IMU window [128 × 9] ──► 1D-CNN encoder (3 conv blocks, 256-d) ──► 
 | Frozen LLM, 1 token | Sensor-as-token injection, globally pooled |
 | Frozen LLM, 8 tokens | Conv features pooled into 8 temporal segments: does exposing time structure help? |
 | LLM + LoRA, 8 tokens | Rank-8 adapters on attention q/v (+819K params): does adapting the backbone help? |
-| Shuffled controls | Each LLM model with sensor tokens permuted across the batch (mean of 5 permutations) |
+| Global-shuffle control | Each LLM model evaluated with every test label paired with a different window from the whole test set (seeded derangement, mean ± std over 5 permutations): the empirical chance baseline |
+| Zero-sensor control | Each LLM model with its sensor tokens replaced by zeros, so only the prompt remains |
 
 **Protocol**
 - **Leakage-free splits:** validation = training subjects 27–30, test = the official UCI test subjects. Disjointness is asserted at load time and tested.
@@ -88,7 +91,7 @@ source venv/bin/activate              # Windows: .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt       # for NVIDIA GPUs install the CUDA build of torch first
 python -m src.download_data           # UCI HAR → data/UCI HAR Dataset
 
-python -m pytest tests -v             # 25 tests, CPU only, no downloads
+python -m pytest tests -v             # 33 tests, CPU only, no downloads
 python -m src.train                   # all 5 conditions × 3 seeds (≈2 h on an RTX 5060 Laptop GPU)
 python -m src.train --remeasure-latency   # re-time each architecture on an idle GPU
 python -m src.predict --condition direct --seed 42   # inference from a saved checkpoint
