@@ -101,7 +101,7 @@ Sources were checked on 2026-10-07: the arXiv abstracts, plus the full text of H
   combinations for SimCLR on HAR and found that **random rotation with fine-tuning** gave the best result, improving
   over supervised and unsupervised baselines. **This study agrees on both points:** rotation is the augmentation the
   gain depends on (ablation), and fine-tuning beats the frozen probe at low budgets. It adds two qualifications:
-  the gain over a from-scratch CNN is confined to the 1 % budget on subject-held-out UCI HAR, and an
+  the largest fine-tuning gains over a from-scratch CNN occurred at the 1 % budget on subject-held-out UCI HAR, and an
   augmentation-matched supervised baseline absorbs much of it.
 - **Haresamudram, Essa & Plötz (2022)**, "Assessing the State of Self-Supervised Human Activity Recognition using
   Wearables" (IMWUT 6(3), arXiv:2202.12938). They pretrain seven SSL methods, including SimCLR, on the large
@@ -215,7 +215,7 @@ the splits and label subsets from raw data, and found the following. All are fix
   by the existing post-test lock.
 - **Weighted kNN rounding (fixed).** float32 cosine similarity can exceed 1 by about 1e-7, which made an exact match's
   inverse-distance weight negative. Similarities are now clipped and the weights are always positive. Re-deriving all
-  18 kNN validation selections and test predictions with the fixed code on the GPU used in the study gave **identical
+  21 kNN validation selections and test predictions with the fixed code on the GPU used in the study gave **identical
   selections and predictions** (`scripts/recheck_knn_fix.py`, `knn_fix_recheck.json`). On CPU one prediction of one
   model differs (unweighted vote): cross-device float differences, not the fix.
 - **Checkpoint replay.** `scripts/replay_checkpoints.py` re-evaluates all 153 selected checkpoints with the current

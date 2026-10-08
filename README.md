@@ -17,7 +17,7 @@ test whether the LLM is actually using the sensor input.
 - **Rigorous comparison:** parameter-matched no-LLM ablation, frozen vs **LoRA-adapted** backbone, 1 vs 8 temporal sensor tokens, equal epoch budgets, 3 seeds
 - **Bug found and fixed:** a `torch.no_grad()` around the frozen LLM had silently blocked gradients to the encoder; fixing it raised the LLM model from 0.513 to over 0.92 macro-F1
 - **Reproducible runs:** per-condition seeding independent of run order, versioned result cache with per-condition provenance (commit, environment, model revision), safe resume after interruption
-- **41 tests** run in seconds on CPU with a tiny random Llama: gradient flow, frozen-weight and LoRA-only training, checkpoint snapshots, leakage-free splits, end-to-end CLI and resume
+- **43 tests** run in seconds on CPU with a tiny random Llama: gradient flow, frozen-weight and LoRA-only training, checkpoint snapshots, leakage-free splits, end-to-end CLI and resume
 
 ---
 
@@ -74,7 +74,8 @@ Validation selections were committed before the one-time test evaluation.
 - Follow-ups (5%/25% budgets, single-window label sampling, augmentation ablation): the largest fine-tuning gains are at
   1% labels (+0.023 to +0.047 in every seed under both samplers), and comparisons at higher budgets are mixed or small.
   Removing rotation augmentation erases the 1% gain and drops the frozen probe to 0.913.
-- All 153 selected models replay from their checkpoints to the published test predictions exactly.
+- All 153 selected models replay from their checkpoints to the published test predictions exactly. Checkpoints and hashes:
+  release [`sensor-contrastive-v1`](https://github.com/jaideepgorijavolu-oss/inertial-sensor-context-encoder/releases/tag/sensor-contrastive-v1).
 
 Report, protocol, audit and raw artifacts: [`results/sensor_contrastive/`](results/sensor_contrastive/REPORT.md).
 
@@ -127,7 +128,7 @@ source venv/bin/activate              # Windows: .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt       # for NVIDIA GPUs install the CUDA build of torch first
 python -m src.download_data           # UCI HAR → data/UCI HAR Dataset
 
-python -m pytest tests -v             # 41 tests, CPU only, no downloads
+python -m pytest tests -v             # 43 tests, CPU only, no downloads (one skips without the dataset)
 python -m src.train                   # all 5 conditions × 3 seeds (≈2–3 h on an RTX 5060 Laptop GPU at full power)
 python -m src.train --remeasure-latency   # re-time each architecture on an idle GPU
 python -m src.predict --condition direct --seed 42   # inference from a saved checkpoint
