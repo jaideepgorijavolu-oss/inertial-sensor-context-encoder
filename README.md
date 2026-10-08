@@ -17,7 +17,7 @@ test whether the LLM is actually using the sensor input.
 - **Rigorous comparison:** parameter-matched no-LLM ablation, frozen vs **LoRA-adapted** backbone, 1 vs 8 temporal sensor tokens, equal epoch budgets, 3 seeds
 - **Bug found and fixed:** a `torch.no_grad()` around the frozen LLM had silently blocked gradients to the encoder; fixing it raised the LLM model from 0.513 to over 0.92 macro-F1
 - **Reproducible runs:** per-condition seeding independent of run order, versioned result cache with per-condition provenance (commit, environment, model revision), safe resume after interruption
-- **33 tests** run in seconds on CPU with a tiny random Llama: gradient flow, frozen-weight and LoRA-only training, checkpoint snapshots, leakage-free splits, end-to-end CLI and resume
+- **41 tests** run in seconds on CPU with a tiny random Llama: gradient flow, frozen-weight and LoRA-only training, checkpoint snapshots, leakage-free splits, end-to-end CLI and resume
 
 ---
 
@@ -122,7 +122,7 @@ source venv/bin/activate              # Windows: .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt       # for NVIDIA GPUs install the CUDA build of torch first
 python -m src.download_data           # UCI HAR → data/UCI HAR Dataset
 
-python -m pytest tests -v             # 33 tests, CPU only, no downloads
+python -m pytest tests -v             # 41 tests, CPU only, no downloads
 python -m src.train                   # all 5 conditions × 3 seeds (≈2–3 h on an RTX 5060 Laptop GPU at full power)
 python -m src.train --remeasure-latency   # re-time each architecture on an idle GPU
 python -m src.predict --condition direct --seed 42   # inference from a saved checkpoint
@@ -145,8 +145,14 @@ src/
   models.py         SensorEncoder, DirectClassifier, MatchedCapacityClassifier, ContextEmbeddingModel, LoRA
   train.py          Multi-seed, multi-condition training/evaluation CLI with per-condition resume
   download_data.py  Dataset download and extraction
+  lowlabel_data.py  Contrastive study: window adjacency, block-sampled label budgets
+  augment.py        Physics-consistent IMU augmentations (scaling, jitter, small 3-D rotation)
+  ssl.py            SimCLR (NT-Xent) pretraining and collapse checks
+  lowlabel.py       Contrastive study CLI: tuning, selection, one-time test evaluation, report
+scripts/audit_legacy.py  Recomputes the legacy-result audit
 tests/              Gradient flow, LoRA, frozen backbone, splits, standardization, end-to-end CLI and resume
 artifacts/          Final results (tables, per-seed metrics)
+results/sensor_contrastive/  Contrastive study: protocol, audit, report, raw metrics, plots
 TECHNICAL_NOTE.md   Method, protocol, full results and discussion
 ```
 
