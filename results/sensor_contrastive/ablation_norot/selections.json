@@ -1,0 +1,2662 @@
+{
+  "entries": {
+    "42/0.01/sup_aug": {
+      "seed": 42,
+      "budget": 0.01,
+      "condition": "sup_aug",
+      "n_train_labels": 59,
+      "n_val_labels": 15,
+      "ssl_pretraining": null,
+      "trainable_params": 146182,
+      "val_macro_f1": 1.0,
+      "best_step": 70,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.002347240224480629,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 140,
+          "loss": 0.002893613651394844,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 210,
+          "loss": 0.0007222560234367847,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 280,
+          "loss": 0.0005519223632290959,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 350,
+          "loss": 0.00045010383473709226,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 420,
+          "loss": 0.0003839042619802058,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 490,
+          "loss": 0.05640240013599396,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 560,
+          "loss": 0.0002934220538008958,
+          "val_macro_f1": 0.9111111111111111
+        },
+        {
+          "step": 630,
+          "loss": 0.00018683448433876038,
+          "val_macro_f1": 0.9111111111111111
+        },
+        {
+          "step": 700,
+          "loss": 0.00013480008055921644,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 770,
+          "loss": 0.00011796373291872442,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 840,
+          "loss": 9.219801722792909e-05,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 910,
+          "loss": 0.00010429388930788264,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 980,
+          "loss": 0.00013997373753227293,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 1050,
+          "loss": 0.00012407766189426184,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 1120,
+          "loss": 9.2679874796886e-05,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 1190,
+          "loss": 8.024434646358714e-05,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 1260,
+          "loss": 0.00019208401499781758,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 1330,
+          "loss": 8.29295240691863e-05,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 1400,
+          "loss": 9.865455649560317e-05,
+          "val_macro_f1": 1.0
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 8.351345000000038,
+        "peak_mem_mb": 109.45068359375,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\42_0.01_sup_aug.pt",
+      "checkpoint_sha256": "8190a5bf70559ba5b75152407995308e72446de288264cbb3bfc392c0dad352d"
+    },
+    "42/0.01/ssl_probe": {
+      "seed": 42,
+      "budget": 0.01,
+      "condition": "ssl_probe",
+      "n_train_labels": 59,
+      "n_val_labels": 15,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "7dc023e81ba73a7a541614ca5c7595ae27f42f43eb1f91175cdcf4238bd0434b",
+        "cost": {
+          "wall_s": 39.35993489999987,
+          "peak_mem_mb": 225.6533203125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 1542,
+      "val_macro_f1": 0.6333333333333332,
+      "hparams": {
+        "C": 1.0
+      },
+      "cost": {
+        "wall_s": 0.05322650000016438,
+        "peak_mem_mb": 101.24658203125,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\42_0.01_ssl_probe.pt",
+      "checkpoint_sha256": "81be6f63c93874190984350be3d4206d48812de4e021880eb5c1f0741621a1ae"
+    },
+    "42/0.01/ssl_ft": {
+      "seed": 42,
+      "budget": 0.01,
+      "condition": "ssl_ft",
+      "n_train_labels": 59,
+      "n_val_labels": 15,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "7dc023e81ba73a7a541614ca5c7595ae27f42f43eb1f91175cdcf4238bd0434b",
+        "cost": {
+          "wall_s": 39.35993489999987,
+          "peak_mem_mb": 225.6533203125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 146182,
+      "val_macro_f1": 1.0,
+      "best_step": 70,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.003239567158743739,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 140,
+          "loss": 0.001395263709127903,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 210,
+          "loss": 0.0008230695966631174,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 280,
+          "loss": 0.0005269207758828998,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 350,
+          "loss": 0.0003898638824466616,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 420,
+          "loss": 0.0003090070094913244,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 490,
+          "loss": 0.00025128040579147637,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 560,
+          "loss": 0.0002099650737363845,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 630,
+          "loss": 0.00017747409583535045,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 700,
+          "loss": 0.00016123426030389965,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 770,
+          "loss": 0.00014743440260645002,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 840,
+          "loss": 0.00013769893848802894,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 910,
+          "loss": 0.00012651592260226607,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 980,
+          "loss": 0.00011987746256636456,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 1050,
+          "loss": 0.000114414855488576,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 1120,
+          "loss": 0.00011543684377102181,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 1190,
+          "loss": 0.0001075420732377097,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 1260,
+          "loss": 0.00011203682515770197,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 1330,
+          "loss": 0.0001100027293432504,
+          "val_macro_f1": 1.0
+        },
+        {
+          "step": 1400,
+          "loss": 0.00010873629071284086,
+          "val_macro_f1": 1.0
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 7.355779799999937,
+        "peak_mem_mb": 110.0087890625,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\42_0.01_ssl_ft.pt",
+      "checkpoint_sha256": "3d4b5c200e940edd0293365950bf0fdbcb6b821208f85742eabacef7083e3e65"
+    },
+    "42/0.1/sup_aug": {
+      "seed": 42,
+      "budget": 0.1,
+      "condition": "sup_aug",
+      "n_train_labels": 587,
+      "n_val_labels": 148,
+      "ssl_pretraining": null,
+      "trainable_params": 146182,
+      "val_macro_f1": 0.9249999999999999,
+      "best_step": 70,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.10437160730361938,
+          "val_macro_f1": 0.9249999999999999
+        },
+        {
+          "step": 140,
+          "loss": 0.03252710402011871,
+          "val_macro_f1": 0.8826758147512864
+        },
+        {
+          "step": 210,
+          "loss": 0.07341352105140686,
+          "val_macro_f1": 0.9249999999999999
+        },
+        {
+          "step": 280,
+          "loss": 0.05535272881388664,
+          "val_macro_f1": 0.9010989010989011
+        },
+        {
+          "step": 350,
+          "loss": 0.05338258296251297,
+          "val_macro_f1": 0.895025728987993
+        },
+        {
+          "step": 420,
+          "loss": 0.021871201694011688,
+          "val_macro_f1": 0.8744581366149092
+        },
+        {
+          "step": 490,
+          "loss": 0.05189530551433563,
+          "val_macro_f1": 0.895025728987993
+        },
+        {
+          "step": 560,
+          "loss": 0.09636525809764862,
+          "val_macro_f1": 0.874819473561612
+        },
+        {
+          "step": 630,
+          "loss": 0.05148959904909134,
+          "val_macro_f1": 0.8664450921238772
+        },
+        {
+          "step": 700,
+          "loss": 0.038292113691568375,
+          "val_macro_f1": 0.8664450921238772
+        },
+        {
+          "step": 770,
+          "loss": 0.02337222546339035,
+          "val_macro_f1": 0.8584273343522227
+        },
+        {
+          "step": 840,
+          "loss": 0.056312207132577896,
+          "val_macro_f1": 0.8786246008627644
+        },
+        {
+          "step": 910,
+          "loss": 0.013349650427699089,
+          "val_macro_f1": 0.8664450921238772
+        },
+        {
+          "step": 980,
+          "loss": 0.014298070222139359,
+          "val_macro_f1": 0.8584273343522227
+        },
+        {
+          "step": 1050,
+          "loss": 0.05548045039176941,
+          "val_macro_f1": 0.8705067643561811
+        },
+        {
+          "step": 1120,
+          "loss": 0.023988548666238785,
+          "val_macro_f1": 0.8786246008627644
+        },
+        {
+          "step": 1190,
+          "loss": 0.050006967037916183,
+          "val_macro_f1": 0.8786246008627644
+        },
+        {
+          "step": 1260,
+          "loss": 0.04456886276602745,
+          "val_macro_f1": 0.8786246008627644
+        },
+        {
+          "step": 1330,
+          "loss": 0.015179703012108803,
+          "val_macro_f1": 0.8786246008627644
+        },
+        {
+          "step": 1400,
+          "loss": 0.0077142249792814255,
+          "val_macro_f1": 0.8786246008627644
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 7.8078422000000955,
+        "peak_mem_mb": 111.08642578125,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\42_0.1_sup_aug.pt",
+      "checkpoint_sha256": "f0d00bbea8891ded434ec1ee57ba399b3b9463c3a24f3aed62e6dddd98ecd8b9"
+    },
+    "42/0.1/ssl_probe": {
+      "seed": 42,
+      "budget": 0.1,
+      "condition": "ssl_probe",
+      "n_train_labels": 587,
+      "n_val_labels": 148,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "7dc023e81ba73a7a541614ca5c7595ae27f42f43eb1f91175cdcf4238bd0434b",
+        "cost": {
+          "wall_s": 39.35993489999987,
+          "peak_mem_mb": 225.6533203125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 1542,
+      "val_macro_f1": 0.8568341711198855,
+      "hparams": {
+        "C": 1.0
+      },
+      "cost": {
+        "wall_s": 0.17100249999998596,
+        "peak_mem_mb": 127.39501953125,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\42_0.1_ssl_probe.pt",
+      "checkpoint_sha256": "7f03fe6fbd4beabdd8ad3d1e6eb25e2e5c4b4d8d2c7ef850aa9f3b9647e3db63"
+    },
+    "42/0.1/ssl_ft": {
+      "seed": 42,
+      "budget": 0.1,
+      "condition": "ssl_ft",
+      "n_train_labels": 587,
+      "n_val_labels": 148,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "7dc023e81ba73a7a541614ca5c7595ae27f42f43eb1f91175cdcf4238bd0434b",
+        "cost": {
+          "wall_s": 39.35993489999987,
+          "peak_mem_mb": 225.6533203125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 146182,
+      "val_macro_f1": 0.9249999999999999,
+      "best_step": 210,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.1013682410120964,
+          "val_macro_f1": 0.9131034482758621
+        },
+        {
+          "step": 140,
+          "loss": 0.027786249294877052,
+          "val_macro_f1": 0.8826758147512864
+        },
+        {
+          "step": 210,
+          "loss": 0.05813082307577133,
+          "val_macro_f1": 0.9249999999999999
+        },
+        {
+          "step": 280,
+          "loss": 0.046393021941185,
+          "val_macro_f1": 0.8947368421052632
+        },
+        {
+          "step": 350,
+          "loss": 0.03526739776134491,
+          "val_macro_f1": 0.8703259005145797
+        },
+        {
+          "step": 420,
+          "loss": 0.011890461668372154,
+          "val_macro_f1": 0.8640109890109889
+        },
+        {
+          "step": 490,
+          "loss": 0.016113650053739548,
+          "val_macro_f1": 0.8765432098765432
+        },
+        {
+          "step": 560,
+          "loss": 0.06573708355426788,
+          "val_macro_f1": 0.8640109890109889
+        },
+        {
+          "step": 630,
+          "loss": 0.021694160997867584,
+          "val_macro_f1": 0.8703259005145797
+        },
+        {
+          "step": 700,
+          "loss": 0.014328930526971817,
+          "val_macro_f1": 0.8765432098765432
+        },
+        {
+          "step": 770,
+          "loss": 0.018720261752605438,
+          "val_macro_f1": 0.8703259005145797
+        },
+        {
+          "step": 840,
+          "loss": 0.033451441675424576,
+          "val_macro_f1": 0.8703259005145797
+        },
+        {
+          "step": 910,
+          "loss": 0.009746870025992393,
+          "val_macro_f1": 0.8703259005145797
+        },
+        {
+          "step": 980,
+          "loss": 0.004537695087492466,
+          "val_macro_f1": 0.8823529411764706
+        },
+        {
+          "step": 1050,
+          "loss": 0.022389428690075874,
+          "val_macro_f1": 0.8703259005145797
+        },
+        {
+          "step": 1120,
+          "loss": 0.024094320833683014,
+          "val_macro_f1": 0.8703259005145797
+        },
+        {
+          "step": 1190,
+          "loss": 0.02396075800061226,
+          "val_macro_f1": 0.8763736263736264
+        },
+        {
+          "step": 1260,
+          "loss": 0.024913575500249863,
+          "val_macro_f1": 0.8763736263736264
+        },
+        {
+          "step": 1330,
+          "loss": 0.007737218402326107,
+          "val_macro_f1": 0.8703259005145797
+        },
+        {
+          "step": 1400,
+          "loss": 0.0038255820982158184,
+          "val_macro_f1": 0.8703259005145797
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 7.742045500000131,
+        "peak_mem_mb": 111.08642578125,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\42_0.1_ssl_ft.pt",
+      "checkpoint_sha256": "31ae688fd1c4f31a0d8d012068502c23771d6e8d70845bd8e57c4bb21df233de"
+    },
+    "42/1.0/sup_aug": {
+      "seed": 42,
+      "budget": 1.0,
+      "condition": "sup_aug",
+      "n_train_labels": 5867,
+      "n_val_labels": 1485,
+      "ssl_pretraining": null,
+      "trainable_params": 146182,
+      "val_macro_f1": 0.9430709101870692,
+      "best_step": 630,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.11841858923435211,
+          "val_macro_f1": 0.9365368420697094
+        },
+        {
+          "step": 140,
+          "loss": 0.10575692355632782,
+          "val_macro_f1": 0.9296024543743258
+        },
+        {
+          "step": 210,
+          "loss": 0.08700596541166306,
+          "val_macro_f1": 0.9389339906581285
+        },
+        {
+          "step": 280,
+          "loss": 0.10504864156246185,
+          "val_macro_f1": 0.9427130684350322
+        },
+        {
+          "step": 350,
+          "loss": 0.0710168182849884,
+          "val_macro_f1": 0.9371123307426394
+        },
+        {
+          "step": 420,
+          "loss": 0.05178160220384598,
+          "val_macro_f1": 0.9257270666539479
+        },
+        {
+          "step": 490,
+          "loss": 0.17424079775810242,
+          "val_macro_f1": 0.9375475121049887
+        },
+        {
+          "step": 560,
+          "loss": 0.030333146452903748,
+          "val_macro_f1": 0.9418899268879383
+        },
+        {
+          "step": 630,
+          "loss": 0.09308475255966187,
+          "val_macro_f1": 0.9430709101870692
+        },
+        {
+          "step": 700,
+          "loss": 0.08521226048469543,
+          "val_macro_f1": 0.9200408380954116
+        },
+        {
+          "step": 770,
+          "loss": 0.0969008356332779,
+          "val_macro_f1": 0.9214829429554413
+        },
+        {
+          "step": 840,
+          "loss": 0.1875607967376709,
+          "val_macro_f1": 0.9220418236324174
+        },
+        {
+          "step": 910,
+          "loss": 0.05036178603768349,
+          "val_macro_f1": 0.9306095535044768
+        },
+        {
+          "step": 980,
+          "loss": 0.11960875988006592,
+          "val_macro_f1": 0.9308472325693127
+        },
+        {
+          "step": 1050,
+          "loss": 0.040958598256111145,
+          "val_macro_f1": 0.9208556278257412
+        },
+        {
+          "step": 1120,
+          "loss": 0.0727483257651329,
+          "val_macro_f1": 0.9227418543677609
+        },
+        {
+          "step": 1190,
+          "loss": 0.0374971404671669,
+          "val_macro_f1": 0.9221215507858993
+        },
+        {
+          "step": 1260,
+          "loss": 0.07908730208873749,
+          "val_macro_f1": 0.9307993003649288
+        },
+        {
+          "step": 1330,
+          "loss": 0.03167346119880676,
+          "val_macro_f1": 0.9326376258599646
+        },
+        {
+          "step": 1400,
+          "loss": 0.05824197828769684,
+          "val_macro_f1": 0.9375097052687242
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 9.819847199999913,
+        "peak_mem_mb": 154.81640625,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\42_1.0_sup_aug.pt",
+      "checkpoint_sha256": "8d450360650128f52bc8b7fd3c5a3e2d028dd3bb4cdd5db52f929ef729cc546c"
+    },
+    "42/1.0/ssl_probe": {
+      "seed": 42,
+      "budget": 1.0,
+      "condition": "ssl_probe",
+      "n_train_labels": 5867,
+      "n_val_labels": 1485,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "7dc023e81ba73a7a541614ca5c7595ae27f42f43eb1f91175cdcf4238bd0434b",
+        "cost": {
+          "wall_s": 39.35993489999987,
+          "peak_mem_mb": 225.6533203125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 1542,
+      "val_macro_f1": 0.937982220801814,
+      "hparams": {
+        "C": 0.1
+      },
+      "cost": {
+        "wall_s": 8.240892799999983,
+        "peak_mem_mb": 175.2998046875,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\42_1.0_ssl_probe.pt",
+      "checkpoint_sha256": "40030a3f24e0bb3f0a432e301ab2f8b91024b26b6b4346e5bf085c0737bbdddf"
+    },
+    "42/1.0/ssl_ft": {
+      "seed": 42,
+      "budget": 1.0,
+      "condition": "ssl_ft",
+      "n_train_labels": 5867,
+      "n_val_labels": 1485,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "7dc023e81ba73a7a541614ca5c7595ae27f42f43eb1f91175cdcf4238bd0434b",
+        "cost": {
+          "wall_s": 39.35993489999987,
+          "peak_mem_mb": 225.6533203125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 146182,
+      "val_macro_f1": 0.9451508102037542,
+      "best_step": 350,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.12624143064022064,
+          "val_macro_f1": 0.9391472758483537
+        },
+        {
+          "step": 140,
+          "loss": 0.08953163772821426,
+          "val_macro_f1": 0.9337949750054788
+        },
+        {
+          "step": 210,
+          "loss": 0.07812917232513428,
+          "val_macro_f1": 0.9406450474382576
+        },
+        {
+          "step": 280,
+          "loss": 0.10432910174131393,
+          "val_macro_f1": 0.9432869291202625
+        },
+        {
+          "step": 350,
+          "loss": 0.05374173820018768,
+          "val_macro_f1": 0.9451508102037542
+        },
+        {
+          "step": 420,
+          "loss": 0.03422810509800911,
+          "val_macro_f1": 0.9375739851286866
+        },
+        {
+          "step": 490,
+          "loss": 0.053887493908405304,
+          "val_macro_f1": 0.9451102428662072
+        },
+        {
+          "step": 560,
+          "loss": 0.029613174498081207,
+          "val_macro_f1": 0.942597104025932
+        },
+        {
+          "step": 630,
+          "loss": 0.08827446401119232,
+          "val_macro_f1": 0.9438553962668871
+        },
+        {
+          "step": 700,
+          "loss": 0.08942580223083496,
+          "val_macro_f1": 0.9282765932632974
+        },
+        {
+          "step": 770,
+          "loss": 0.09704186022281647,
+          "val_macro_f1": 0.9383359733272317
+        },
+        {
+          "step": 840,
+          "loss": 0.14376616477966309,
+          "val_macro_f1": 0.9339419860633852
+        },
+        {
+          "step": 910,
+          "loss": 0.038279514759778976,
+          "val_macro_f1": 0.9425919129025585
+        },
+        {
+          "step": 980,
+          "loss": 0.09315499663352966,
+          "val_macro_f1": 0.9283535634821378
+        },
+        {
+          "step": 1050,
+          "loss": 0.049033407121896744,
+          "val_macro_f1": 0.9413793334297701
+        },
+        {
+          "step": 1120,
+          "loss": 0.07661274075508118,
+          "val_macro_f1": 0.9370900297399093
+        },
+        {
+          "step": 1190,
+          "loss": 0.02707963064312935,
+          "val_macro_f1": 0.9370900297399093
+        },
+        {
+          "step": 1260,
+          "loss": 0.07368354499340057,
+          "val_macro_f1": 0.9364722806771173
+        },
+        {
+          "step": 1330,
+          "loss": 0.034586191177368164,
+          "val_macro_f1": 0.937707217759462
+        },
+        {
+          "step": 1400,
+          "loss": 0.04559801146388054,
+          "val_macro_f1": 0.9382947590498903
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 7.905215999999882,
+        "peak_mem_mb": 154.81640625,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\42_1.0_ssl_ft.pt",
+      "checkpoint_sha256": "3b3dc5e2f256a133b075cb05cb6ef48b87e73ffe194f52be3228e45b805eee6c"
+    },
+    "43/0.01/sup_aug": {
+      "seed": 43,
+      "budget": 0.01,
+      "condition": "sup_aug",
+      "n_train_labels": 59,
+      "n_val_labels": 15,
+      "ssl_pretraining": null,
+      "trainable_params": 146182,
+      "val_macro_f1": 0.7777777777777777,
+      "best_step": 70,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.0021818929817527533,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 140,
+          "loss": 0.0016579345101490617,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 210,
+          "loss": 0.0005822694511152804,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 280,
+          "loss": 0.00035868375562131405,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 350,
+          "loss": 0.0006401385762728751,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 420,
+          "loss": 0.0012676760088652372,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 490,
+          "loss": 0.00017954113718587905,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 560,
+          "loss": 0.00017502973787486553,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 630,
+          "loss": 0.0006775850779376924,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 700,
+          "loss": 0.00023178460833150893,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 770,
+          "loss": 0.00013095024041831493,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 840,
+          "loss": 9.324045095127076e-05,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 910,
+          "loss": 0.00010532607848290354,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 980,
+          "loss": 9.176215826300904e-05,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1050,
+          "loss": 0.00044498377246782184,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1120,
+          "loss": 0.0001405157381668687,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1190,
+          "loss": 0.00011709232785506174,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1260,
+          "loss": 9.370812040288001e-05,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1330,
+          "loss": 9.564610809320584e-05,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1400,
+          "loss": 0.00011724609066732228,
+          "val_macro_f1": 0.7777777777777777
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 6.297046399999999,
+        "peak_mem_mb": 110.0087890625,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\43_0.01_sup_aug.pt",
+      "checkpoint_sha256": "06c44e9189b8b99289d8fbce5b208aa29d3aafbe9a7907b14058edf393f6a805"
+    },
+    "43/0.01/ssl_probe": {
+      "seed": 43,
+      "budget": 0.01,
+      "condition": "ssl_probe",
+      "n_train_labels": 59,
+      "n_val_labels": 15,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "18f6f6913e6e84de16ab6cb0f8b0aa3b2396933fbb8a92ac821c1bf0e0a61feb",
+        "cost": {
+          "wall_s": 36.716114399999924,
+          "peak_mem_mb": 226.21142578125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 1542,
+      "val_macro_f1": 0.7777777777777777,
+      "hparams": {
+        "C": 0.01
+      },
+      "cost": {
+        "wall_s": 0.06888129999992998,
+        "peak_mem_mb": 101.24658203125,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\43_0.01_ssl_probe.pt",
+      "checkpoint_sha256": "43a02e7ccd47fdbf289ed646be132038376a8243db9de5a63bae52dd307c2dce"
+    },
+    "43/0.01/ssl_ft": {
+      "seed": 43,
+      "budget": 0.01,
+      "condition": "ssl_ft",
+      "n_train_labels": 59,
+      "n_val_labels": 15,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "18f6f6913e6e84de16ab6cb0f8b0aa3b2396933fbb8a92ac821c1bf0e0a61feb",
+        "cost": {
+          "wall_s": 36.716114399999924,
+          "peak_mem_mb": 226.21142578125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 146182,
+      "val_macro_f1": 0.7777777777777777,
+      "best_step": 70,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.003526632208377123,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 140,
+          "loss": 0.0014640261651948094,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 210,
+          "loss": 0.0008610459044575691,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 280,
+          "loss": 0.0005862422403879464,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 350,
+          "loss": 0.0004158708325121552,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 420,
+          "loss": 0.0003319515089970082,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 490,
+          "loss": 0.0002669111709110439,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 560,
+          "loss": 0.00022013015404809266,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 630,
+          "loss": 0.0001985006674658507,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 700,
+          "loss": 0.00017314533761236817,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 770,
+          "loss": 0.00016026623779907823,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 840,
+          "loss": 0.00014067011943552643,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 910,
+          "loss": 0.00014118081890046597,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 980,
+          "loss": 0.00013386670616455376,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1050,
+          "loss": 0.0001270743814529851,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1120,
+          "loss": 0.00013112541637383401,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1190,
+          "loss": 0.00011882809485541657,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1260,
+          "loss": 0.00012051824160153046,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1330,
+          "loss": 0.00011649365478660911,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1400,
+          "loss": 0.00011707870726240799,
+          "val_macro_f1": 0.7777777777777777
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 6.009073799999896,
+        "peak_mem_mb": 110.0087890625,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\43_0.01_ssl_ft.pt",
+      "checkpoint_sha256": "a1be33a4f754ca4daf9b42f29c989a21d63805f1d4d6ef88a47426f104a2c3ae"
+    },
+    "43/0.1/sup_aug": {
+      "seed": 43,
+      "budget": 0.1,
+      "condition": "sup_aug",
+      "n_train_labels": 587,
+      "n_val_labels": 148,
+      "ssl_pretraining": null,
+      "trainable_params": 146182,
+      "val_macro_f1": 0.9318885448916409,
+      "best_step": 770,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.06963077187538147,
+          "val_macro_f1": 0.9258241758241758
+        },
+        {
+          "step": 140,
+          "loss": 0.08802443742752075,
+          "val_macro_f1": 0.8932700760616137
+        },
+        {
+          "step": 210,
+          "loss": 0.1181926429271698,
+          "val_macro_f1": 0.9073756432246999
+        },
+        {
+          "step": 280,
+          "loss": 0.059119924902915955,
+          "val_macro_f1": 0.9195046439628483
+        },
+        {
+          "step": 350,
+          "loss": 0.019574565812945366,
+          "val_macro_f1": 0.9131034482758621
+        },
+        {
+          "step": 420,
+          "loss": 0.05379819497466087,
+          "val_macro_f1": 0.9259259259259259
+        },
+        {
+          "step": 490,
+          "loss": 0.007800680119544268,
+          "val_macro_f1": 0.9258241758241758
+        },
+        {
+          "step": 560,
+          "loss": 0.03586909547448158,
+          "val_macro_f1": 0.9135802469135802
+        },
+        {
+          "step": 630,
+          "loss": 0.03797492757439613,
+          "val_macro_f1": 0.9135802469135802
+        },
+        {
+          "step": 700,
+          "loss": 0.045524053275585175,
+          "val_macro_f1": 0.9135802469135802
+        },
+        {
+          "step": 770,
+          "loss": 0.02427092008292675,
+          "val_macro_f1": 0.9318885448916409
+        },
+        {
+          "step": 840,
+          "loss": 0.10534606873989105,
+          "val_macro_f1": 0.9318885448916409
+        },
+        {
+          "step": 910,
+          "loss": 0.04542629048228264,
+          "val_macro_f1": 0.9318885448916409
+        },
+        {
+          "step": 980,
+          "loss": 0.018802860751748085,
+          "val_macro_f1": 0.9197255574614065
+        },
+        {
+          "step": 1050,
+          "loss": 0.04929319769144058,
+          "val_macro_f1": 0.9318885448916409
+        },
+        {
+          "step": 1120,
+          "loss": 0.04829907417297363,
+          "val_macro_f1": 0.9258241758241758
+        },
+        {
+          "step": 1190,
+          "loss": 0.016140863299369812,
+          "val_macro_f1": 0.9318885448916409
+        },
+        {
+          "step": 1260,
+          "loss": 0.036540769040584564,
+          "val_macro_f1": 0.9318885448916409
+        },
+        {
+          "step": 1330,
+          "loss": 0.04140862077474594,
+          "val_macro_f1": 0.9318885448916409
+        },
+        {
+          "step": 1400,
+          "loss": 0.028366491198539734,
+          "val_macro_f1": 0.9318885448916409
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 6.637431699999979,
+        "peak_mem_mb": 111.08642578125,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\43_0.1_sup_aug.pt",
+      "checkpoint_sha256": "379fc7432be4b05d55f0f238e4992c21499048cfa898e6b222e587af717c1a73"
+    },
+    "43/0.1/ssl_probe": {
+      "seed": 43,
+      "budget": 0.1,
+      "condition": "ssl_probe",
+      "n_train_labels": 587,
+      "n_val_labels": 148,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "18f6f6913e6e84de16ab6cb0f8b0aa3b2396933fbb8a92ac821c1bf0e0a61feb",
+        "cost": {
+          "wall_s": 36.716114399999924,
+          "peak_mem_mb": 226.21142578125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 1542,
+      "val_macro_f1": 0.8954620598056232,
+      "hparams": {
+        "C": 10.0
+      },
+      "cost": {
+        "wall_s": 0.16569029999982376,
+        "peak_mem_mb": 127.39501953125,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\43_0.1_ssl_probe.pt",
+      "checkpoint_sha256": "a6e604dac6f160113ad8df281f99c5dc1a681fad0e6a809aaeff6a1234764dc2"
+    },
+    "43/0.1/ssl_ft": {
+      "seed": 43,
+      "budget": 0.1,
+      "condition": "ssl_ft",
+      "n_train_labels": 587,
+      "n_val_labels": 148,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "18f6f6913e6e84de16ab6cb0f8b0aa3b2396933fbb8a92ac821c1bf0e0a61feb",
+        "cost": {
+          "wall_s": 36.716114399999924,
+          "peak_mem_mb": 226.21142578125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 146182,
+      "val_macro_f1": 0.9318885448916409,
+      "best_step": 770,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.08347856998443604,
+          "val_macro_f1": 0.9073756432246999
+        },
+        {
+          "step": 140,
+          "loss": 0.08006642013788223,
+          "val_macro_f1": 0.9195046439628483
+        },
+        {
+          "step": 210,
+          "loss": 0.09395509213209152,
+          "val_macro_f1": 0.9131034482758621
+        },
+        {
+          "step": 280,
+          "loss": 0.04862023890018463,
+          "val_macro_f1": 0.9197255574614065
+        },
+        {
+          "step": 350,
+          "loss": 0.01600956730544567,
+          "val_macro_f1": 0.9071207430340557
+        },
+        {
+          "step": 420,
+          "loss": 0.04736882448196411,
+          "val_macro_f1": 0.9258241758241758
+        },
+        {
+          "step": 490,
+          "loss": 0.009567514061927795,
+          "val_macro_f1": 0.9073756432246999
+        },
+        {
+          "step": 560,
+          "loss": 0.03906829655170441,
+          "val_macro_f1": 0.9135802469135802
+        },
+        {
+          "step": 630,
+          "loss": 0.02954435907304287,
+          "val_macro_f1": 0.9073756432246999
+        },
+        {
+          "step": 700,
+          "loss": 0.030457504093647003,
+          "val_macro_f1": 0.9135802469135802
+        },
+        {
+          "step": 770,
+          "loss": 0.022835327312350273,
+          "val_macro_f1": 0.9318885448916409
+        },
+        {
+          "step": 840,
+          "loss": 0.06925339251756668,
+          "val_macro_f1": 0.9258241758241758
+        },
+        {
+          "step": 910,
+          "loss": 0.04285609349608421,
+          "val_macro_f1": 0.9197255574614065
+        },
+        {
+          "step": 980,
+          "loss": 0.02380189299583435,
+          "val_macro_f1": 0.9073756432246999
+        },
+        {
+          "step": 1050,
+          "loss": 0.04020019620656967,
+          "val_macro_f1": 0.9197255574614065
+        },
+        {
+          "step": 1120,
+          "loss": 0.03202180564403534,
+          "val_macro_f1": 0.9197255574614065
+        },
+        {
+          "step": 1190,
+          "loss": 0.007955513894557953,
+          "val_macro_f1": 0.9258241758241758
+        },
+        {
+          "step": 1260,
+          "loss": 0.03706936910748482,
+          "val_macro_f1": 0.9318885448916409
+        },
+        {
+          "step": 1330,
+          "loss": 0.03090493381023407,
+          "val_macro_f1": 0.9258241758241758
+        },
+        {
+          "step": 1400,
+          "loss": 0.017940150573849678,
+          "val_macro_f1": 0.9258241758241758
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 6.307099200000039,
+        "peak_mem_mb": 111.08642578125,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\43_0.1_ssl_ft.pt",
+      "checkpoint_sha256": "2e0129d1bfacf292d555408b4663959d0c6268c8c575c20d84ed88c04d9a316e"
+    },
+    "43/1.0/sup_aug": {
+      "seed": 43,
+      "budget": 1.0,
+      "condition": "sup_aug",
+      "n_train_labels": 5867,
+      "n_val_labels": 1485,
+      "ssl_pretraining": null,
+      "trainable_params": 146182,
+      "val_macro_f1": 0.9438246100110476,
+      "best_step": 630,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.17398452758789062,
+          "val_macro_f1": 0.93513969430126
+        },
+        {
+          "step": 140,
+          "loss": 0.14969520270824432,
+          "val_macro_f1": 0.9194146302863541
+        },
+        {
+          "step": 210,
+          "loss": 0.14508841931819916,
+          "val_macro_f1": 0.9381843818865269
+        },
+        {
+          "step": 280,
+          "loss": 0.16001924872398376,
+          "val_macro_f1": 0.9247459135350323
+        },
+        {
+          "step": 350,
+          "loss": 0.06479030847549438,
+          "val_macro_f1": 0.9352168686836327
+        },
+        {
+          "step": 420,
+          "loss": 0.09442506730556488,
+          "val_macro_f1": 0.9358351576380382
+        },
+        {
+          "step": 490,
+          "loss": 0.1097765639424324,
+          "val_macro_f1": 0.9351618594684342
+        },
+        {
+          "step": 560,
+          "loss": 0.026403523981571198,
+          "val_macro_f1": 0.9352168686836327
+        },
+        {
+          "step": 630,
+          "loss": 0.1064683198928833,
+          "val_macro_f1": 0.9438246100110476
+        },
+        {
+          "step": 700,
+          "loss": 0.05765460431575775,
+          "val_macro_f1": 0.9259437039225098
+        },
+        {
+          "step": 770,
+          "loss": 0.04423077404499054,
+          "val_macro_f1": 0.931606069537104
+        },
+        {
+          "step": 840,
+          "loss": 0.05200977995991707,
+          "val_macro_f1": 0.9276641435419242
+        },
+        {
+          "step": 910,
+          "loss": 0.04936084523797035,
+          "val_macro_f1": 0.9264394450061791
+        },
+        {
+          "step": 980,
+          "loss": 0.06176726147532463,
+          "val_macro_f1": 0.9276641435419242
+        },
+        {
+          "step": 1050,
+          "loss": 0.03927956521511078,
+          "val_macro_f1": 0.9271204326721866
+        },
+        {
+          "step": 1120,
+          "loss": 0.0396205335855484,
+          "val_macro_f1": 0.9308715094158067
+        },
+        {
+          "step": 1190,
+          "loss": 0.07748885452747345,
+          "val_macro_f1": 0.9282894626187873
+        },
+        {
+          "step": 1260,
+          "loss": 0.0798955112695694,
+          "val_macro_f1": 0.9332671318661657
+        },
+        {
+          "step": 1330,
+          "loss": 0.04505831003189087,
+          "val_macro_f1": 0.9301611432046215
+        },
+        {
+          "step": 1400,
+          "loss": 0.10139837861061096,
+          "val_macro_f1": 0.9302481136780626
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 6.734042199999976,
+        "peak_mem_mb": 154.81640625,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\43_1.0_sup_aug.pt",
+      "checkpoint_sha256": "06d214c69cf655ff7c2e901b3b89a14190b43a7c5bc14fdeddd1e40017889734"
+    },
+    "43/1.0/ssl_probe": {
+      "seed": 43,
+      "budget": 1.0,
+      "condition": "ssl_probe",
+      "n_train_labels": 5867,
+      "n_val_labels": 1485,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "18f6f6913e6e84de16ab6cb0f8b0aa3b2396933fbb8a92ac821c1bf0e0a61feb",
+        "cost": {
+          "wall_s": 36.716114399999924,
+          "peak_mem_mb": 226.21142578125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 1542,
+      "val_macro_f1": 0.9359659968762907,
+      "hparams": {
+        "C": 10.0
+      },
+      "cost": {
+        "wall_s": 46.65857950000009,
+        "peak_mem_mb": 175.2998046875,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\43_1.0_ssl_probe.pt",
+      "checkpoint_sha256": "01ba4e6da6bc04298965babe351b1f4c4ae23d50359867ee6fd0a80eb6605af1"
+    },
+    "43/1.0/ssl_ft": {
+      "seed": 43,
+      "budget": 1.0,
+      "condition": "ssl_ft",
+      "n_train_labels": 5867,
+      "n_val_labels": 1485,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "18f6f6913e6e84de16ab6cb0f8b0aa3b2396933fbb8a92ac821c1bf0e0a61feb",
+        "cost": {
+          "wall_s": 36.716114399999924,
+          "peak_mem_mb": 226.21142578125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 146182,
+      "val_macro_f1": 0.9493967309224862,
+      "best_step": 70,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.15046311914920807,
+          "val_macro_f1": 0.9493967309224862
+        },
+        {
+          "step": 140,
+          "loss": 0.1546097993850708,
+          "val_macro_f1": 0.9431823305477914
+        },
+        {
+          "step": 210,
+          "loss": 0.14803580939769745,
+          "val_macro_f1": 0.9445341445341446
+        },
+        {
+          "step": 280,
+          "loss": 0.14173124730587006,
+          "val_macro_f1": 0.9274677274677274
+        },
+        {
+          "step": 350,
+          "loss": 0.05522117763757706,
+          "val_macro_f1": 0.9395545703254496
+        },
+        {
+          "step": 420,
+          "loss": 0.09793344885110855,
+          "val_macro_f1": 0.9439319393193931
+        },
+        {
+          "step": 490,
+          "loss": 0.12166669964790344,
+          "val_macro_f1": 0.9327517144568725
+        },
+        {
+          "step": 560,
+          "loss": 0.01808471977710724,
+          "val_macro_f1": 0.9414832446310609
+        },
+        {
+          "step": 630,
+          "loss": 0.10341494530439377,
+          "val_macro_f1": 0.9451405418416196
+        },
+        {
+          "step": 700,
+          "loss": 0.052612461149692535,
+          "val_macro_f1": 0.9251675294230418
+        },
+        {
+          "step": 770,
+          "loss": 0.04419897869229317,
+          "val_macro_f1": 0.9284254813741181
+        },
+        {
+          "step": 840,
+          "loss": 0.04723431169986725,
+          "val_macro_f1": 0.9308724734638917
+        },
+        {
+          "step": 910,
+          "loss": 0.05077909678220749,
+          "val_macro_f1": 0.9346902111752726
+        },
+        {
+          "step": 980,
+          "loss": 0.0560828372836113,
+          "val_macro_f1": 0.9414754186058952
+        },
+        {
+          "step": 1050,
+          "loss": 0.04019560664892197,
+          "val_macro_f1": 0.9352231695981695
+        },
+        {
+          "step": 1120,
+          "loss": 0.04064536839723587,
+          "val_macro_f1": 0.939015688687912
+        },
+        {
+          "step": 1190,
+          "loss": 0.07828640192747116,
+          "val_macro_f1": 0.9371653534525543
+        },
+        {
+          "step": 1260,
+          "loss": 0.06542417407035828,
+          "val_macro_f1": 0.9402465667915106
+        },
+        {
+          "step": 1330,
+          "loss": 0.04240487515926361,
+          "val_macro_f1": 0.939015688687912
+        },
+        {
+          "step": 1400,
+          "loss": 0.09377734363079071,
+          "val_macro_f1": 0.9402225790624024
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 6.050540199999887,
+        "peak_mem_mb": 154.81640625,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\43_1.0_ssl_ft.pt",
+      "checkpoint_sha256": "df44931273ae4f5fcbc5c1ddd9a2759289cf6e87f1f08147fb18e00c6bbc5334"
+    },
+    "44/0.01/sup_aug": {
+      "seed": 44,
+      "budget": 0.01,
+      "condition": "sup_aug",
+      "n_train_labels": 59,
+      "n_val_labels": 15,
+      "ssl_pretraining": null,
+      "trainable_params": 146182,
+      "val_macro_f1": 0.7777777777777777,
+      "best_step": 140,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.0026904172264039516,
+          "val_macro_f1": 0.6888888888888888
+        },
+        {
+          "step": 140,
+          "loss": 0.001043156604282558,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 210,
+          "loss": 0.0005157698760740459,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 280,
+          "loss": 0.0013160972157493234,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 350,
+          "loss": 0.0003555734583642334,
+          "val_macro_f1": 0.6888888888888888
+        },
+        {
+          "step": 420,
+          "loss": 0.0003608754777815193,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 490,
+          "loss": 0.00020516679796855897,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 560,
+          "loss": 0.00016059960762504488,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 630,
+          "loss": 0.00014744684449397027,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 700,
+          "loss": 0.00012790151231456548,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 770,
+          "loss": 0.0002809660800267011,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 840,
+          "loss": 0.00012034186511300504,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 910,
+          "loss": 0.00020653699175454676,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 980,
+          "loss": 9.114860586123541e-05,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1050,
+          "loss": 9.471634984947741e-05,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1120,
+          "loss": 8.538291149307042e-05,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1190,
+          "loss": 8.284357318188995e-05,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1260,
+          "loss": 9.064278128789738e-05,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1330,
+          "loss": 7.052927685435861e-05,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1400,
+          "loss": 7.193094643298537e-05,
+          "val_macro_f1": 0.7777777777777777
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 6.880188999999973,
+        "peak_mem_mb": 110.0087890625,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\44_0.01_sup_aug.pt",
+      "checkpoint_sha256": "9907f05d11d0fac2e1e645a5f6340f9b8225a7c85a7693429e654b6167df8ca1"
+    },
+    "44/0.01/ssl_probe": {
+      "seed": 44,
+      "budget": 0.01,
+      "condition": "ssl_probe",
+      "n_train_labels": 59,
+      "n_val_labels": 15,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "4a173c31c8b23d361d42e51d9c496d462880d7e96178e85e5de662c58613eed4",
+        "cost": {
+          "wall_s": 26.88828979999994,
+          "peak_mem_mb": 226.21142578125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 1542,
+      "val_macro_f1": 0.5555555555555555,
+      "hparams": {
+        "C": 0.1
+      },
+      "cost": {
+        "wall_s": 0.06347770000002129,
+        "peak_mem_mb": 101.24658203125,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\44_0.01_ssl_probe.pt",
+      "checkpoint_sha256": "87cdbfe287ae9d03e0660ccf9feab53d2b5d208552a96107e721512c19d09f4b"
+    },
+    "44/0.01/ssl_ft": {
+      "seed": 44,
+      "budget": 0.01,
+      "condition": "ssl_ft",
+      "n_train_labels": 59,
+      "n_val_labels": 15,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "4a173c31c8b23d361d42e51d9c496d462880d7e96178e85e5de662c58613eed4",
+        "cost": {
+          "wall_s": 26.88828979999994,
+          "peak_mem_mb": 226.21142578125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 146182,
+      "val_macro_f1": 0.7777777777777777,
+      "best_step": 70,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.0033755400218069553,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 140,
+          "loss": 0.001385870622470975,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 210,
+          "loss": 0.0008033622871153057,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 280,
+          "loss": 0.0005418361979536712,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 350,
+          "loss": 0.0004083095700480044,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 420,
+          "loss": 0.00031888377270661294,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 490,
+          "loss": 0.0002487013698555529,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 560,
+          "loss": 0.00021244815434329212,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 630,
+          "loss": 0.00017782476788852364,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 700,
+          "loss": 0.00016517280892003328,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 770,
+          "loss": 0.00014563664444722235,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 840,
+          "loss": 0.00013617041986435652,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 910,
+          "loss": 0.0001297280687140301,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 980,
+          "loss": 0.0001228346227435395,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1050,
+          "loss": 0.00011850132432300597,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1120,
+          "loss": 0.00010991805902449414,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1190,
+          "loss": 0.00011106523015769199,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1260,
+          "loss": 0.0001130930904764682,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1330,
+          "loss": 0.00010801244206959382,
+          "val_macro_f1": 0.7777777777777777
+        },
+        {
+          "step": 1400,
+          "loss": 0.000109443164546974,
+          "val_macro_f1": 0.7777777777777777
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 6.158445799999981,
+        "peak_mem_mb": 110.0087890625,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\44_0.01_ssl_ft.pt",
+      "checkpoint_sha256": "2fe812c716265c19c10762d005b503bd2a240d752e249232324df73a699ac2bc"
+    },
+    "44/0.1/sup_aug": {
+      "seed": 44,
+      "budget": 0.1,
+      "condition": "sup_aug",
+      "n_train_labels": 587,
+      "n_val_labels": 148,
+      "ssl_pretraining": null,
+      "trainable_params": 146182,
+      "val_macro_f1": 0.9938080495356036,
+      "best_step": 280,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.05739956721663475,
+          "val_macro_f1": 0.975
+        },
+        {
+          "step": 140,
+          "loss": 0.07464180886745453,
+          "val_macro_f1": 0.975
+        },
+        {
+          "step": 210,
+          "loss": 0.04232799634337425,
+          "val_macro_f1": 0.972639055622249
+        },
+        {
+          "step": 280,
+          "loss": 0.031645968556404114,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 350,
+          "loss": 0.014930188655853271,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 420,
+          "loss": 0.05047653242945671,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 490,
+          "loss": 0.021138381212949753,
+          "val_macro_f1": 0.9872335459006297
+        },
+        {
+          "step": 560,
+          "loss": 0.08933133631944656,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 630,
+          "loss": 0.0279160737991333,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 700,
+          "loss": 0.062111593782901764,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 770,
+          "loss": 0.026847755536437035,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 840,
+          "loss": 0.03708827868103981,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 910,
+          "loss": 0.060561537742614746,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 980,
+          "loss": 0.009094588458538055,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 1050,
+          "loss": 0.04828687757253647,
+          "val_macro_f1": 0.9872335459006297
+        },
+        {
+          "step": 1120,
+          "loss": 0.050396841019392014,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 1190,
+          "loss": 0.006070190109312534,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 1260,
+          "loss": 0.042091790586709976,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 1330,
+          "loss": 0.019288521260023117,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 1400,
+          "loss": 0.10244068503379822,
+          "val_macro_f1": 0.9870759414877063
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 6.575471500000049,
+        "peak_mem_mb": 111.08642578125,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\44_0.1_sup_aug.pt",
+      "checkpoint_sha256": "55b6bb28fd17877d7dde172427a71bdb703cb945091c843d6d753696b3d90911"
+    },
+    "44/0.1/ssl_probe": {
+      "seed": 44,
+      "budget": 0.1,
+      "condition": "ssl_probe",
+      "n_train_labels": 587,
+      "n_val_labels": 148,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "4a173c31c8b23d361d42e51d9c496d462880d7e96178e85e5de662c58613eed4",
+        "cost": {
+          "wall_s": 26.88828979999994,
+          "peak_mem_mb": 226.21142578125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 1542,
+      "val_macro_f1": 0.9932659932659932,
+      "hparams": {
+        "C": 1.0
+      },
+      "cost": {
+        "wall_s": 0.23469649999992725,
+        "peak_mem_mb": 127.39501953125,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\44_0.1_ssl_probe.pt",
+      "checkpoint_sha256": "07c830711a5fc0d59533e5d4991633ce107bb4e7924f92e9cf52d4305942e1f4"
+    },
+    "44/0.1/ssl_ft": {
+      "seed": 44,
+      "budget": 0.1,
+      "condition": "ssl_ft",
+      "n_train_labels": 587,
+      "n_val_labels": 148,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "4a173c31c8b23d361d42e51d9c496d462880d7e96178e85e5de662c58613eed4",
+        "cost": {
+          "wall_s": 26.88828979999994,
+          "peak_mem_mb": 226.21142578125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 146182,
+      "val_macro_f1": 0.9938080495356036,
+      "best_step": 140,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.07110162079334259,
+          "val_macro_f1": 0.9876373626373627
+        },
+        {
+          "step": 140,
+          "loss": 0.03797505423426628,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 210,
+          "loss": 0.030149683356285095,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 280,
+          "loss": 0.017234185710549355,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 350,
+          "loss": 0.010036823339760303,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 420,
+          "loss": 0.041708774864673615,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 490,
+          "loss": 0.013539036735892296,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 560,
+          "loss": 0.08166976273059845,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 630,
+          "loss": 0.016251567751169205,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 700,
+          "loss": 0.05662228912115097,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 770,
+          "loss": 0.034279610961675644,
+          "val_macro_f1": 0.9870759414877063
+        },
+        {
+          "step": 840,
+          "loss": 0.02013837918639183,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 910,
+          "loss": 0.044887565076351166,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 980,
+          "loss": 0.008213670924305916,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 1050,
+          "loss": 0.034939393401145935,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 1120,
+          "loss": 0.04640057310461998,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 1190,
+          "loss": 0.004343798384070396,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 1260,
+          "loss": 0.014193873852491379,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 1330,
+          "loss": 0.017071032896637917,
+          "val_macro_f1": 0.9938080495356036
+        },
+        {
+          "step": 1400,
+          "loss": 0.07340921461582184,
+          "val_macro_f1": 0.9938080495356036
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 6.554456999999957,
+        "peak_mem_mb": 111.08642578125,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\44_0.1_ssl_ft.pt",
+      "checkpoint_sha256": "cdd4ed9467425d198cf57c50cbfab826fc0c9b1359ffe00dfa74a28dd2c318a0"
+    },
+    "44/1.0/sup_aug": {
+      "seed": 44,
+      "budget": 1.0,
+      "condition": "sup_aug",
+      "n_train_labels": 5867,
+      "n_val_labels": 1485,
+      "ssl_pretraining": null,
+      "trainable_params": 146182,
+      "val_macro_f1": 0.9437198067632852,
+      "best_step": 210,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.156542107462883,
+          "val_macro_f1": 0.9306104535630743
+        },
+        {
+          "step": 140,
+          "loss": 0.13767802715301514,
+          "val_macro_f1": 0.9289782616486617
+        },
+        {
+          "step": 210,
+          "loss": 0.15420180559158325,
+          "val_macro_f1": 0.9437198067632852
+        },
+        {
+          "step": 280,
+          "loss": 0.14115962386131287,
+          "val_macro_f1": 0.9279747905318984
+        },
+        {
+          "step": 350,
+          "loss": 0.09508940577507019,
+          "val_macro_f1": 0.9370912651755976
+        },
+        {
+          "step": 420,
+          "loss": 0.15476173162460327,
+          "val_macro_f1": 0.9303847493502665
+        },
+        {
+          "step": 490,
+          "loss": 0.04286636412143707,
+          "val_macro_f1": 0.9302716760753719
+        },
+        {
+          "step": 560,
+          "loss": 0.03471852466464043,
+          "val_macro_f1": 0.9419959705569559
+        },
+        {
+          "step": 630,
+          "loss": 0.032944247126579285,
+          "val_macro_f1": 0.9296715825627891
+        },
+        {
+          "step": 700,
+          "loss": 0.07877489924430847,
+          "val_macro_f1": 0.9161968939400156
+        },
+        {
+          "step": 770,
+          "loss": 0.062298547476530075,
+          "val_macro_f1": 0.9196776253326586
+        },
+        {
+          "step": 840,
+          "loss": 0.115877166390419,
+          "val_macro_f1": 0.9114183030652588
+        },
+        {
+          "step": 910,
+          "loss": 0.0793263390660286,
+          "val_macro_f1": 0.9197620315162031
+        },
+        {
+          "step": 980,
+          "loss": 0.07827891409397125,
+          "val_macro_f1": 0.9084551623817907
+        },
+        {
+          "step": 1050,
+          "loss": 0.07454055547714233,
+          "val_macro_f1": 0.912661795583663
+        },
+        {
+          "step": 1120,
+          "loss": 0.08731023967266083,
+          "val_macro_f1": 0.9132577382636292
+        },
+        {
+          "step": 1190,
+          "loss": 0.06161481887102127,
+          "val_macro_f1": 0.920150338005319
+        },
+        {
+          "step": 1260,
+          "loss": 0.08297885209321976,
+          "val_macro_f1": 0.9213890455838268
+        },
+        {
+          "step": 1330,
+          "loss": 0.05888940393924713,
+          "val_macro_f1": 0.912592986046984
+        },
+        {
+          "step": 1400,
+          "loss": 0.055668480694293976,
+          "val_macro_f1": 0.9137818144234311
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 6.898246199999903,
+        "peak_mem_mb": 154.81640625,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\44_1.0_sup_aug.pt",
+      "checkpoint_sha256": "03cbc538e93d4f3879703fd9fbfb3bc504f382877dda5d7f28c97238f3e42c23"
+    },
+    "44/1.0/ssl_probe": {
+      "seed": 44,
+      "budget": 1.0,
+      "condition": "ssl_probe",
+      "n_train_labels": 5867,
+      "n_val_labels": 1485,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "4a173c31c8b23d361d42e51d9c496d462880d7e96178e85e5de662c58613eed4",
+        "cost": {
+          "wall_s": 26.88828979999994,
+          "peak_mem_mb": 226.21142578125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 1542,
+      "val_macro_f1": 0.9413777992048052,
+      "hparams": {
+        "C": 0.1
+      },
+      "cost": {
+        "wall_s": 59.24129059999996,
+        "peak_mem_mb": 175.2998046875,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\44_1.0_ssl_probe.pt",
+      "checkpoint_sha256": "9fda2841fe921f0d1482d7d980389def673d19bc4c69d9a915aa38be6761895e"
+    },
+    "44/1.0/ssl_ft": {
+      "seed": 44,
+      "budget": 1.0,
+      "condition": "ssl_ft",
+      "n_train_labels": 5867,
+      "n_val_labels": 1485,
+      "ssl_pretraining": {
+        "tau": 0.1,
+        "aug": "strong_norot",
+        "epochs": 200,
+        "sha256": "4a173c31c8b23d361d42e51d9c496d462880d7e96178e85e5de662c58613eed4",
+        "cost": {
+          "wall_s": 26.88828979999994,
+          "peak_mem_mb": 226.21142578125,
+          "mem_method": "torch.cuda.max_memory_allocated"
+        },
+        "shared_across": "budgets and ssl_* conditions of this seed"
+      },
+      "trainable_params": 146182,
+      "val_macro_f1": 0.9439319393193931,
+      "best_step": 560,
+      "history": [
+        {
+          "step": 70,
+          "loss": 0.1489076316356659,
+          "val_macro_f1": 0.9394425581717568
+        },
+        {
+          "step": 140,
+          "loss": 0.12520664930343628,
+          "val_macro_f1": 0.9384225279900132
+        },
+        {
+          "step": 210,
+          "loss": 0.15780127048492432,
+          "val_macro_f1": 0.9385668591878131
+        },
+        {
+          "step": 280,
+          "loss": 0.14544904232025146,
+          "val_macro_f1": 0.9314683562428407
+        },
+        {
+          "step": 350,
+          "loss": 0.0810377448797226,
+          "val_macro_f1": 0.9401921669433585
+        },
+        {
+          "step": 420,
+          "loss": 0.1490301489830017,
+          "val_macro_f1": 0.9322278515770193
+        },
+        {
+          "step": 490,
+          "loss": 0.034079134464263916,
+          "val_macro_f1": 0.9433204199576833
+        },
+        {
+          "step": 560,
+          "loss": 0.036968231201171875,
+          "val_macro_f1": 0.9439319393193931
+        },
+        {
+          "step": 630,
+          "loss": 0.0320788249373436,
+          "val_macro_f1": 0.9414973262032085
+        },
+        {
+          "step": 700,
+          "loss": 0.07887650281190872,
+          "val_macro_f1": 0.9237233421084224
+        },
+        {
+          "step": 770,
+          "loss": 0.0702764242887497,
+          "val_macro_f1": 0.9308852009579976
+        },
+        {
+          "step": 840,
+          "loss": 0.13075223565101624,
+          "val_macro_f1": 0.9066085302823569
+        },
+        {
+          "step": 910,
+          "loss": 0.06798350811004639,
+          "val_macro_f1": 0.9128213063903875
+        },
+        {
+          "step": 980,
+          "loss": 0.07694151252508163,
+          "val_macro_f1": 0.9097977137808053
+        },
+        {
+          "step": 1050,
+          "loss": 0.05828515812754631,
+          "val_macro_f1": 0.912220498414281
+        },
+        {
+          "step": 1120,
+          "loss": 0.08302809298038483,
+          "val_macro_f1": 0.9121792798667142
+        },
+        {
+          "step": 1190,
+          "loss": 0.05741715803742409,
+          "val_macro_f1": 0.9128400064013246
+        },
+        {
+          "step": 1260,
+          "loss": 0.06345182657241821,
+          "val_macro_f1": 0.9128400064013246
+        },
+        {
+          "step": 1330,
+          "loss": 0.0635131224989891,
+          "val_macro_f1": 0.9084901584175231
+        },
+        {
+          "step": 1400,
+          "loss": 0.047889593988657,
+          "val_macro_f1": 0.9045472240385477
+        }
+      ],
+      "hparams": {
+        "lr": 0.001,
+        "wd": 0.0001
+      },
+      "cost": {
+        "wall_s": 7.361274000000094,
+        "peak_mem_mb": 154.81640625,
+        "mem_method": "torch.cuda.max_memory_allocated"
+      },
+      "checkpoint": "models\\44_1.0_ssl_ft.pt",
+      "checkpoint_sha256": "98d5be0370f83403ba269239450e08eca49ab93e5f19ccd066c4ffda3319160e"
+    }
+  },
+  "chosen": {
+    "ssl": {
+      "tau": 0.1,
+      "aug": "strong_norot"
+    },
+    "sup": {
+      "lr": 0.001,
+      "wd": 0.0001
+    },
+    "sup_aug": {
+      "lr": 0.001,
+      "wd": 0.0001
+    },
+    "ssl_ft": {
+      "lr": 0.001,
+      "wd": 0.0001
+    }
+  },
+  "environment": {
+    "time_utc": "2026-10-08T02:28:55+00:00",
+    "git_commit": "a9a910ead145689328d5989ec0aeea73b3f8e983",
+    "git_dirty": true,
+    "git_diff_sha256": null,
+    "python": "3.14.6",
+    "torch": "2.14.1+cu130",
+    "cuda": "13.0",
+    "numpy": "2.5.3",
+    "scikit_learn": "1.9.1",
+    "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "data_sha256": "d59f95b85125448338c0e928c017dc72b956c8b42c69ce3a6531fe9de76600e9",
+    "argv": [
+      "C:\\Users\\Jai Gori\\Downloads\\inertial-sensor-context-encoder\\src\\lowlabel.py",
+      "stage-b",
+      "--run-dir",
+      "results/sensor_contrastive/ablation_norot",
+      "--stage-a",
+      "results/sensor_contrastive/mvs/stage_a.json",
+      "--ssl-cache",
+      "results/sensor_contrastive/mvs/ssl",
+      "--ssl-aug",
+      "strong_norot",
+      "--conditions",
+      "sup_aug",
+      "ssl_probe",
+      "ssl_ft"
+    ]
+  }
+}
