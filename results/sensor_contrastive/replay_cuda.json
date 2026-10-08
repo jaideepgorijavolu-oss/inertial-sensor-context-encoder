@@ -1,0 +1,25 @@
+{
+  "device": "cuda",
+  "runs": {
+    "mvs": {
+      "models": 54,
+      "models_with_changed_predictions": 0,
+      "changed_predictions": {}
+    },
+    "budgets_5_25": {
+      "models": 36,
+      "models_with_changed_predictions": 0,
+      "changed_predictions": {}
+    },
+    "iid": {
+      "models": 36,
+      "models_with_changed_predictions": 0,
+      "changed_predictions": {}
+    },
+    "ablation_norot": {
+      "models": 27,
+      "models_with_changed_predictions": 0,
+      "changed_predictions": {}
+    }
+  }
+}

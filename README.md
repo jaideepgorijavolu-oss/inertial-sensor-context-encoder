@@ -63,23 +63,28 @@ Validation selections were committed before the one-time test evaluation.
 | :--- | ---: | ---: | ---: |
 | Supervised CNN | 0.800 ± 0.014 | 0.913 ± 0.008 | 0.926 ± 0.011 |
 | Supervised CNN + same augmentations | 0.830 ± 0.019 | 0.900 ± 0.023 | 0.906 ± 0.005 |
-| SimCLR, frozen + linear probe (1.5K params) | 0.778 ± 0.011 | 0.899 ± 0.006 | **0.950 ± 0.004** |
+| SimCLR, frozen + linear probe (1.5K params trained after pretraining) | 0.778 ± 0.011 | 0.899 ± 0.006 | **0.950 ± 0.004** |
 | SimCLR + full fine-tune | **0.847 ± 0.021** | 0.915 ± 0.012 | 0.932 ± 0.008 |
 
 - At 1% labels, pretraining + fine-tuning beats the from-scratch CNN in all 3 seeds (+0.047), but most of that gain is
   matched by training the CNN with the same augmentations (+0.017, mixed across seeds).
 - With all labels, a frozen SimCLR encoder + linear probe is the best model in either study (0.950, +0.024 over the CNN
   in every seed), almost entirely from the hard Sitting/Standing pair.
-- The legacy direct CNN was retrained and reproduced bit-exactly.
-- Follow-ups (5%/25% budgets, i.i.d. label sampling, augmentation ablation): the pretraining gain is confined to the 1% budget
-  (+0.023 to +0.047 in every seed under both sampling schemes), and removing rotation augmentation erases it and drops the
-  frozen probe to 0.913. Block-sampled labels are worth less than i.i.d. ones at the same count (0.800 vs 0.861 at 1%).
+- The legacy direct CNN was retrained and matched its saved metrics and confusion matrices exactly.
+- Follow-ups (5%/25% budgets, single-window label sampling, augmentation ablation): the largest fine-tuning gains are at
+  1% labels (+0.023 to +0.047 in every seed under both samplers), and comparisons at higher budgets are mixed or small.
+  Removing rotation augmentation erases the 1% gain and drops the frozen probe to 0.913.
+- All 153 selected models replay from their checkpoints to the published test predictions exactly.
 
 Report, protocol, audit and raw artifacts: [`results/sensor_contrastive/`](results/sensor_contrastive/REPORT.md).
 
 ```bash
-python -m src.lowlabel stage-a && python -m src.lowlabel stage-b    # validation-only tuning and selection (~5 min GPU)
-python -m src.lowlabel evaluate-test && python -m src.lowlabel report
+python -m src.lowlabel report --run-dir results/sensor_contrastive/mvs     # regenerate tables/plot from published predictions
+# fresh end-to-end run (~5 min on a laptop GPU); always use a new run directory
+python -m src.lowlabel stage-a --run-dir results/sensor_contrastive/reproduction_01
+python -m src.lowlabel stage-b --run-dir results/sensor_contrastive/reproduction_01
+python -m src.lowlabel evaluate-test --run-dir results/sensor_contrastive/reproduction_01
+python -m src.lowlabel report --run-dir results/sensor_contrastive/reproduction_01
 ```
 
 ---

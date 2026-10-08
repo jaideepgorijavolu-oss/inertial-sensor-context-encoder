@@ -1,6 +1,6 @@
 # Audit: inertial-sensor-context-encoder before the contrastive study
 
-Date: 2026-10-07. Auditor: Claude Code (Opus 5.5), for Jaideep Gorijavolu.
+Date: 2026-10-07. Repository audit for Jaideep Gorijavolu.
 Checkout: `C:\Users\Jai Gori\Downloads\inertial-sensor-context-encoder`, `main` = `origin/main` =
 `bebe5b204226108402b869b2e802957a6b7ad280`, clean tree (verified with `git ls-remote`, no fetch).
 A second, older clone at `C:\Users\Jai Gori\inertial-sensor-context-encoder` (`0c3b961`, one untracked

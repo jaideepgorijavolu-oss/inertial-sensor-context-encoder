@@ -1,0 +1,128 @@
+{
+  "mvs/42/0.01/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": false,
+    "k": 5
+  },
+  "mvs/42/0.1/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": false,
+    "k": 3
+  },
+  "mvs/42/1.0/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": true,
+    "k": 5
+  },
+  "mvs/43/0.01/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": false,
+    "k": 5
+  },
+  "mvs/43/0.1/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": true,
+    "k": 5
+  },
+  "mvs/43/1.0/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": true,
+    "k": 10
+  },
+  "mvs/44/0.01/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": false,
+    "k": 10
+  },
+  "mvs/44/0.1/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": true,
+    "k": 20
+  },
+  "mvs/44/1.0/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": false,
+    "k": 5
+  },
+  "budgets_5_25/42/0.05/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": true,
+    "k": 20
+  },
+  "budgets_5_25/42/0.25/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": true,
+    "k": 20
+  },
+  "budgets_5_25/43/0.05/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": false,
+    "k": 1
+  },
+  "budgets_5_25/43/0.25/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": true,
+    "k": 10
+  },
+  "budgets_5_25/44/0.05/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": true,
+    "k": 20
+  },
+  "budgets_5_25/44/0.25/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": true,
+    "k": 5
+  },
+  "iid/42/0.01/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": true,
+    "k": 5
+  },
+  "iid/42/0.1/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": true,
+    "k": 20
+  },
+  "iid/43/0.01/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": false,
+    "k": 1
+  },
+  "iid/43/0.1/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": true,
+    "k": 10
+  },
+  "iid/44/0.01/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": true,
+    "k": 3
+  },
+  "iid/44/0.1/ssl_knn": {
+    "selection_unchanged": true,
+    "test_predictions_changed": 0,
+    "weighted": false,
+    "k": 3
+  }
+}

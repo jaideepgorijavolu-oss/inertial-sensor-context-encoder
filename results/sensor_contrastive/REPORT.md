@@ -43,9 +43,10 @@ Raw data: `mvs/test_metrics.json` (per-class F1, confusion matrices, per-subject
 2. **Freezing hurts at low labels and helps at full labels.** Fine-tuning beats the frozen probe by 0.069
    at 1 % (all seeds), while the frozen probe beats fine-tuning by 0.017 at 100 % (all seeds). This is the
    distinction the fine-tune condition was added to separate.
-3. **At 100 % labels the frozen SimCLR encoder with a 1,542-parameter linear probe is the best model in this
+3. **At 100 % labels the frozen SimCLR encoder with a linear probe (1,542 parameters trained after pretraining;
+   the 144,640-parameter encoder was trained by SimCLR) is the best model in this
    study:** 0.950 ± 0.004, above the supervised CNN in all 3 seeds (+0.024). It is also above the legacy direct
-   CNN (0.934, which reproduced bit-exactly). The gain comes almost entirely from the hard Sitting/Standing pair
+   CNN (0.934; its retraining matched the saved metrics and confusion matrices exactly). The gain comes almost entirely from the hard Sitting/Standing pair
    (per-class F1 0.914 / 0.913 vs 0.811 / 0.839). The probe's worst test subject is also higher
    (0.76–0.82 vs 0.65–0.73).
 4. **Representation learning matters.** A random encoder with BN statistics recalibrated on the same unlabeled
@@ -117,7 +118,8 @@ Sources were checked on 2026-10-07: the arXiv abstracts, plus the full text of H
 
 There is one dataset (smartphone at the waist, 30 subjects) and 3 seeds. The test set was inspected in earlier
 work (AUDIT D8). Stage-A tuning used 10 % labels, more than the 1 % budget, symmetrically for both families.
-The 5 % and 25 % budgets, i.i.d. sampling sensitivity and the rotation ablation are not run yet (protocol §9).
+(Written before Amendment 1: the 5 % and 25 % budgets, the sampling sensitivity and the rotation ablation were
+then run; see the Expansion section.)
 
 ## Questions you should be able to answer
 
@@ -139,7 +141,7 @@ with per-seed paired differences.
 
 **5 % and 25 % budgets** (`budgets_5_25/`):
 
-| Condition | 5 % (293) | 25 % (1467) |
+| Condition | 5 % (294) | 25 % (1466) |
 | :--- | ---: | ---: |
 | Supervised CNN | 0.899 ± 0.019 | 0.935 ± 0.007 |
 | Supervised CNN + aug | 0.884 ± 0.023 | 0.906 ± 0.006 |
@@ -149,7 +151,8 @@ with per-seed paired differences.
 Fine-tune − supervised: +0.004 (+0.028 / −0.007 / −0.009) at 5 %, and −0.009 at 25 %. There is no pretraining
 advantage over plain supervision between 5 % and 25 %.
 
-**i.i.d. window sampling instead of blocks** (`iid/`, 1 % and 10 %):
+**Single-window sampling instead of 4-window blocks** (`iid/`, `--block-len 1`, 1 % and 10 %). This is still
+per-class, subject-round-robin ordering, not uniform i.i.d. sampling:
 
 | Condition | 1 % | 10 % |
 | :--- | ---: | ---: |
@@ -159,10 +162,13 @@ advantage over plain supervision between 5 % and 25 %.
 | SimCLR + fine-tune | **0.884 ± 0.005** | **0.929 ± 0.009** |
 
 - Every method scores higher than under block sampling at the same window count (supervised at 1 %: 0.861 vs
-  0.800). Overlapping, contiguous labels carry less information per window, so i.i.d. sampling overstates what a
-  real annotation budget buys.
-- The 1 % fine-tune advantage holds: +0.023 over the supervised CNN (+0.030 / +0.028 / +0.012, all seeds) and
-  +0.018 over the augmented CNN (+0.000 / +0.030 / +0.023, no seed negative).
+  0.800). **This comparison is confounded:** at 1 % the block sampler's labels come from 11 / 12 / 13 of the 17 training
+  subjects (seeds 42 / 43 / 44; about 3 subjects per class), the single-window sampler's from all 17 (8–11 per class),
+  and the validation subsets differ too. Temporal redundancy, subject coverage and validation sample change together,
+  so the gap does not isolate the effect of contiguous labels. Isolating it would need a protocol that fixes the
+  subject × class allocation.
+- Fine-tune − supervised is positive in every seed at both budgets: +0.023 at 1 % (+0.030 / +0.028 / +0.012) and
+  +0.008 at 10 % (+0.013 / +0.002 / +0.008). Against the augmented CNN: +0.018 at 1 % (+0.000 / +0.030 / +0.023).
 
 **Rotation ablation** (`ablation_norot/`: strong augmentation without the 3-D rotation; validation agrees with test):
 
@@ -176,18 +182,47 @@ Mean validation macro-F1 for the probe drops the same way (0.970 → 0.656 at 1 
 
 **What the ablation teaches.** Rotation is the augmentation that makes the contrastive representation work.
 Without it, the frozen probe falls from 0.950 to 0.913 at 100 %, below the supervised CNN. The 1 % fine-tune
-advantage over the augmented CNN also disappears (−0.044). In supervised training the same rotation *hurts*:
-removing it restores the augmented CNN's Sitting/Standing F1 at 100 % (0.734/0.822 → 0.813/0.847). One reading
-consistent with both results: in the contrastive objective, small orientation changes define *which* windows count as
-the same, forcing features that are robust to placement while still encoding posture. In cross-entropy training,
-the same perturbation only adds label noise to the gravity-direction cue. This is an interpretation, not a tested
-mechanism.
+advantage over the augmented CNN also disappears (−0.044). For the supervised CNN the effect depends on budget.
+At 1 % rotation helps the supervised CNN (0.830 with vs 0.805 without); at 10 % and 100 % it hurts (0.900 vs 0.913, 0.906 vs 0.923), and removing it restores Sitting/Standing F1 at 100 % (0.734/0.822 → 0.813/0.847). The ablation shows that
+these SimCLR results depend on rotation augmentation. It does not show *why*: a learned placement invariance that
+keeps posture information is one hypothesis, not a tested mechanism.
 
 ### Updated bottom line
 
-- Contrastive pretraining with fine-tuning helps **only at the smallest budget**: +0.047 (block) and +0.023
-  (i.i.d.) over the same CNN at 1 %, in every seed. From 5 % up, plain supervision matches it.
+- The **largest fine-tuning gains** over the from-scratch CNN occur at 1 % labels: +0.047 (block) and +0.023
+  (single-window), positive in every seed. At higher budgets the block-sampled comparisons are mixed (5 %: +0.004,
+  25 %: −0.009, 100 %: +0.007, each with a negative seed). The single-window 10 % comparison is small but positive
+  in every seed (+0.008). None of this establishes a general benefit or equivalence.
+- Stage-A tuning used 10 % labels for every method family, more than the 1 % budget; keep that in mind when
+  reading 1 % results.
 - Fine-tuning from SimCLR is at or above the augmentation-matched CNN at every budget on average (+0.015 to
   +0.026), but at most budgets one seed is negative.
 - With all labels, the frozen SimCLR encoder plus linear probe (0.950) is the best model in either study, and that
   advantage depends on rotation augmentation.
+
+## Corrections after external review (2026-10-08)
+
+An independent review recomputed all 153 saved prediction records and 85 summary entries (all agreed), reproduced
+the splits and label subsets from raw data, and found the following. All are fixed in code, with regression tests.
+**No reported metric changed.**
+
+- **Unsafe resume and cache reuse (fixed).** A rerun in an existing run directory with different settings used to
+  keep old checkpoints while writing a new split manifest, and SSL caches were reused without checking inputs or
+  hashes. Each run directory now records `run_config.json` (data hash, sampler, steps, SSL epochs, chosen
+  hyperparameters, normalization, code hash) and refuses mismatched reuse. Reused checkpoints must match their
+  sha256. Manifests are extended, never relabelled. SSL caches carry a key over pretraining inputs, normalization,
+  augmentation, optimizer settings and code. Published run directories predate `run_config.json` and are protected
+  by the existing post-test lock.
+- **Weighted kNN rounding (fixed).** float32 cosine similarity can exceed 1 by about 1e-7, which made an exact match's
+  inverse-distance weight negative. Similarities are now clipped and the weights are always positive. Re-deriving all
+  18 kNN validation selections and test predictions with the fixed code on the GPU used in the study gave **identical
+  selections and predictions** (`scripts/recheck_knn_fix.py`, `knn_fix_recheck.json`). On CPU one prediction of one
+  model differs (unweighted vote): cross-device float differences, not the fix.
+- **Checkpoint replay.** `scripts/replay_checkpoints.py` re-evaluates all 153 selected checkpoints with the current
+  code. On the GPU, **every test prediction matches** the published records (`replay_cuda.json`). Checkpoint loading now
+  uses `map_location`, so CPU-only replay works.
+- **Fresh-run commands (fixed).** The documented defaults pointed at the published, locked `mvs/` directory. Stage A
+  now refuses to overwrite existing tuning, and the documented commands use a new `--run-dir`.
+- **Wording.** "Helps only at 1 %" is narrowed (see the bottom line). The `iid` run is described as single-window
+  round-robin sampling, with its subject-coverage confound stated. Rotation is no longer said to hurt supervision at
+  every budget. Plot x-labels name the sampler, and the 5 % / 25 % counts are corrected to 294 / 1466.

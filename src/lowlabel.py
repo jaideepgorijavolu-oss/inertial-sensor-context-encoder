@@ -1,12 +1,14 @@
 """
 Low-label contrastive study runner (results/sensor_contrastive/PROTOCOL.md).
 
-    python -m src.lowlabel stage-a        # validation-only tuning on seed 42, 10% budget
-    python -m src.lowlabel stage-b        # every seed x budget x condition, selection on V_b only
-    python -m src.lowlabel evaluate-test  # one-time test evaluation of the frozen selections
-    python -m src.lowlabel report         # tables and plot from saved metrics (no evaluation)
+    python -m src.lowlabel stage-a --run-dir DIR        # validation-only tuning on seed 42, 10% budget
+    python -m src.lowlabel stage-b --run-dir DIR        # every seed x budget x condition, selection on V_b only
+    python -m src.lowlabel evaluate-test --run-dir DIR  # one-time test evaluation of the frozen selections
+    python -m src.lowlabel report --run-dir DIR         # tables and plot from saved metrics (no evaluation)
 
-Only `evaluate-test` loads test windows. It refuses to run twice for the same run directory.
+Use a new DIR for every fresh run; the default is the published, locked study (`report` only).
+Only `evaluate-test` loads test windows. It refuses to run twice for the same run directory, and
+every stage refuses to reuse a directory whose recorded run configuration differs.
 """
 import argparse
 import datetime
@@ -24,6 +26,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix, f1_score
+
+from dataclasses import asdict
 
 from src.augment import AugConfig, augment
 from src.dataset import ACTIVITY_NAMES, DEFAULT_DATA_DIR
@@ -61,6 +65,48 @@ def environment(data_dir: str) -> dict:
         "platform": platform.platform(), "data_sha256": raw_data_sha256(data_dir),
         "argv": sys.argv,
     }
+
+
+CODE_FILES = ("lowlabel.py", "lowlabel_data.py", "augment.py", "ssl.py", "models.py", "dataset.py")
+
+
+def code_sha256(files=CODE_FILES) -> str:
+    """Identity of the study code actually imported (file bytes with normalized newlines)."""
+    h = hashlib.sha256()
+    here = os.path.dirname(os.path.abspath(__file__))
+    for name in files:
+        with open(os.path.join(here, name), "rb") as f:
+            h.update(name.encode())
+            h.update(f.read().replace(b"\r\n", b"\n"))
+    return h.hexdigest()
+
+
+def run_config(args, ctx, chosen) -> dict:
+    """Everything that must match for work in one run directory to be combined or reused."""
+    return {"data_sha256": raw_data_sha256(args.data_dir), "block_len": args.block_len, "steps": args.steps,
+            "ssl_epochs": args.ssl_epochs, "chosen": chosen,
+            "scaler_mean": ctx.data.scaler.mean.ravel().tolist(), "scaler_std": ctx.data.scaler.std.ravel().tolist(),
+            "code_sha256": code_sha256()}
+
+
+def check_run_config(run_dir: str, cfg: dict) -> None:
+    """Write the run configuration once; afterwards refuse any call whose configuration differs."""
+    path = os.path.join(run_dir, "run_config.json")
+    if not os.path.exists(path):
+        dump(path, cfg)
+        return
+    saved = load(path)
+    diff = sorted(k for k in set(saved) | set(cfg) if saved.get(k) != cfg.get(k))
+    if diff:
+        raise RuntimeError(f"{run_dir} was produced with different settings ({', '.join(diff)}); "
+                           f"start a new --run-dir instead of reusing this one")
+
+
+def require_checkpoint(path: str, sha: str) -> None:
+    if not os.path.exists(path):
+        raise RuntimeError(f"checkpoint missing: {path}")
+    if sha256_file(path) != sha:
+        raise RuntimeError(f"checkpoint changed since it was recorded: {path}")
 
 
 def sha256_file(path: str) -> str:
@@ -236,16 +282,20 @@ def probe_predict(p, F) -> np.ndarray:
 
 
 def knn_predict(F_ref, y_ref, F_q, k: int, weighted: bool) -> np.ndarray:
-    """Exact cosine kNN; weighted = 1/(cosine distance + 1e-8). Vote ties -> lowest class id."""
+    """
+    Exact cosine kNN. Weighted votes use 1 / (cosine distance + 1e-6) with similarities clipped to
+    [-1, 1] first: float32 rounding can push an exact match slightly above 1, which would otherwise
+    give a negative weight. Vote ties go to the lowest class id.
+    """
     a = F_ref / np.linalg.norm(F_ref, axis=1, keepdims=True).clip(1e-12)
     b = F_q / np.linalg.norm(F_q, axis=1, keepdims=True).clip(1e-12)
-    sim = b @ a.T
+    sim = np.clip(b @ a.T, -1.0, 1.0)
     k = min(k, len(F_ref))
     nn_idx = np.argpartition(-sim, k - 1, axis=1)[:, :k]
     votes = np.zeros((len(F_q), 6))
     for j in range(k):
         cols = nn_idx[:, j]
-        w = 1.0 / (1.0 - sim[np.arange(len(F_q)), cols] + 1e-8) if weighted else 1.0
+        w = 1.0 / (np.maximum(1.0 - sim[np.arange(len(F_q)), cols], 0.0) + 1e-6) if weighted else 1.0
         np.add.at(votes, (np.arange(len(F_q)), y_ref[cols]), w)
     return votes.argmax(1)
 
@@ -265,11 +315,27 @@ def fit_knn(F_tr, y_tr, F_va, y_va) -> dict:
 # ----------------------------------------------------------------------------- SSL cache
 
 def ssl_encoder(ctx: Ctx, run_dir: str, seed: int, tau: float, aug: str, epochs: int, log=print) -> tuple:
-    """Pretrained encoder for (seed, tau, aug), trained once and reused (same inputs and rule)."""
+    """
+    Pretrained encoder for (seed, tau, aug), trained once and reused. Reuse requires the same cache key
+    (pretraining inputs, normalization, augmentation, optimizer settings and code) and an unchanged
+    checkpoint. Label budgets are not part of the key: pretraining never sees labels.
+    """
+    h = hashlib.sha256(np.ascontiguousarray(ctx.data.pool_inputs()).tobytes())
+    for a in (ctx.data.scaler.mean, ctx.data.scaler.std, ctx.data.channel_std):
+        h.update(np.ascontiguousarray(a, dtype=np.float32).tobytes())
+    h.update(json.dumps({"seed": seed, "tau": tau, "aug": asdict(AugConfig.named(aug)), "epochs": epochs,
+                         "batch_size": 256, "lr": 1e-3, "weight_decay": 1e-4,
+                         "code": code_sha256(("ssl.py", "augment.py", "models.py"))}, sort_keys=True).encode())
+    key = h.hexdigest()
     path = os.path.join(run_dir, f"seed{seed}_tau{tau}_{aug}_ep{epochs}.pt")
     meta_path = path.replace(".pt", ".json")
-    if os.path.exists(path) and os.path.exists(meta_path):
-        return torch.load(path), load(meta_path)
+    if os.path.exists(path) or os.path.exists(meta_path):
+        meta = load(meta_path) if os.path.exists(meta_path) else {}
+        if meta.get("cache_key") != key:
+            raise RuntimeError(f"SSL cache {path} was built from different inputs, settings or code; "
+                               f"use a new --ssl-cache directory")
+        require_checkpoint(path, meta["sha256"])
+        return torch.load(path, map_location="cpu"), meta
     with Meter(ctx.device) as m:
         state, hist = pretrain(ctx.data.pool_inputs(), ctx.data.scaler.mean, ctx.data.scaler.std,
                                ctx.data.channel_std, AugConfig.named(aug), tau, seed, ctx.device,
@@ -278,7 +344,7 @@ def ssl_encoder(ctx: Ctx, run_dir: str, seed: int, tau: float, aug: str, epochs:
     torch.save(state, path)
     meta = {"seed": seed, "tau": tau, "aug": aug, "epochs": epochs, "inputs": "pool windows, no labels",
             "n_inputs": int(len(ctx.data.pool_idx)), "checkpoint_rule": "final epoch",
-            "history": hist, "cost": m.record(), "sha256": sha256_file(path)}
+            "history": hist, "cost": m.record(), "sha256": sha256_file(path), "cache_key": key}
     dump(meta_path, meta)
     return state, meta
 
@@ -286,6 +352,10 @@ def ssl_encoder(ctx: Ctx, run_dir: str, seed: int, tau: float, aug: str, epochs:
 # ----------------------------------------------------------------------------- stages
 
 def stage_a(args, ctx: Ctx, log=print) -> dict:
+    for name in ("stage_a.json", "run_config.json"):
+        if os.path.exists(os.path.join(args.run_dir, name)):
+            raise RuntimeError(f"{args.run_dir} already has {name}; published tuning is not overwritten. "
+                               f"Use a new --run-dir for a fresh run.")
     seed, b = STAGE_A_SEED, STAGE_A_BUDGET
     sub = ctx.data.subsets(seed, b)
     tr, va = sub["train"], sub["val"]
@@ -323,13 +393,15 @@ def stage_a(args, ctx: Ctx, log=print) -> dict:
 
 
 def stage_b(args, ctx: Ctx, log=print) -> dict:
+    if os.path.exists(os.path.join(args.run_dir, "test_metrics.json")):
+        raise RuntimeError("test evaluation already ran for this run directory; selections are frozen. "
+                           "Use a new --run-dir for a fresh run.")
     chosen = load(args.stage_a or os.path.join(args.run_dir, "stage_a.json"))["chosen"]
     if args.ssl_aug:
         chosen["ssl"]["aug"] = args.ssl_aug             # ablation: SSL and sup_aug augmentations
+    check_run_config(args.run_dir, run_config(args, ctx, chosen))
     sel_path = os.path.join(args.run_dir, "selections.json")
     sel = load(sel_path) if os.path.exists(sel_path) else {"entries": {}, "chosen": chosen}
-    if os.path.exists(os.path.join(args.run_dir, "test_metrics.json")):
-        raise RuntimeError("test evaluation already ran for this run directory; selections are frozen")
     mdir = os.path.join(args.run_dir, "models")
     os.makedirs(mdir, exist_ok=True)
     manifest = {"pool_subjects": sorted(set(ctx.data.subjects[ctx.data.pool_idx].tolist())),
@@ -348,7 +420,9 @@ def stage_b(args, ctx: Ctx, log=print) -> dict:
                                                   "train_desc": ctx.data.describe(tr), "val_desc": ctx.data.describe(va)}
             for cond in args.conditions:
                 key = f"{seed}/{b}/{cond}"
-                if key in sel["entries"]:
+                if key in sel["entries"]:          # same run config (checked above); verify the artifact
+                    old = sel["entries"][key]
+                    require_checkpoint(os.path.join(args.run_dir, old["checkpoint"]), old["checkpoint_sha256"])
                     continue
                 entry = {"seed": seed, "budget": b, "condition": cond, "n_train_labels": int(len(tr)),
                          "n_val_labels": int(len(va)), "ssl_pretraining": None}
@@ -384,9 +458,21 @@ def stage_b(args, ctx: Ctx, log=print) -> dict:
                 sel["entries"][key] = entry
                 log(f"seed {seed} budget {b} {cond}: val F1 {entry['val_macro_f1']:.4f} (n_val={len(va)})")
                 dump(sel_path, sel)
-    sel["environment"] = environment(args.data_dir)
+    man_path = os.path.join(args.run_dir, "split_manifest.json")
+    if os.path.exists(man_path):                  # extend, never relabel: overlapping subsets must agree
+        old = load(man_path)
+        for k in ("pool_ids", "val_ids", "chain_ids", "block_len"):
+            if old[k] != manifest[k]:
+                raise RuntimeError(f"split manifest field {k} differs from the recorded run")
+        for k, v in old["subsets"].items():
+            new = manifest["subsets"].get(k)
+            if new is not None and (v["train"] != new["train"] or v["val"] != new["val"]):
+                raise RuntimeError(f"label subset {k} differs from the recorded run")
+        manifest["subsets"] = {**old["subsets"], **manifest["subsets"]}
+    sel.setdefault("environments", []).append(environment(args.data_dir))
+    sel["environment"] = sel["environments"][-1]
     dump(sel_path, sel)
-    dump(os.path.join(args.run_dir, "split_manifest.json"), manifest)
+    dump(man_path, manifest)
     return sel
 
 
@@ -397,6 +483,13 @@ def evaluate_test(args, device, log=print) -> dict:
         raise RuntimeError(f"{out_path} exists: the test set was already evaluated for this run")
     sel = load(os.path.join(args.run_dir, "selections.json"))
     data = StudyData(args.data_dir)                    # block_len irrelevant here; standardizer and kNN references: pool only
+    cfg_path = os.path.join(args.run_dir, "run_config.json")
+    if os.path.exists(cfg_path):
+        cfg = load(cfg_path)
+        if (cfg["data_sha256"] != raw_data_sha256(args.data_dir)
+                or not np.allclose(cfg["scaler_mean"], data.scaler.mean.ravel())
+                or not np.allclose(cfg["scaler_std"], data.scaler.std.ravel())):
+            raise RuntimeError("data or normalization differs from the training record of this run")
     Xte, yte, ste = load_test(args.data_dir)
     mean = torch.tensor(data.scaler.mean.reshape(-1), device=device)
     std = torch.tensor(data.scaler.std.reshape(-1), device=device)
@@ -406,8 +499,8 @@ def evaluate_test(args, device, log=print) -> dict:
                "test_subjects": sorted(set(ste.tolist())), "entries": {}}
     for key, e in sel["entries"].items():
         path = os.path.join(args.run_dir, e["checkpoint"])
-        assert sha256_file(path) == e["checkpoint_sha256"], f"checkpoint changed since selection: {path}"
-        ck = torch.load(path, weights_only=False)
+        require_checkpoint(path, e["checkpoint_sha256"])
+        ck = torch.load(path, map_location=device, weights_only=False)
         if e["condition"] in ("sup", "sup_aug", "ssl_ft"):
             model = DirectClassifier(SensorEncoder()).to(device)
             model.load_state_dict(ck)
@@ -471,12 +564,14 @@ def report(args) -> str:
     dump(os.path.join(args.run_dir, "summary.json"), summary)
     with open(os.path.join(args.run_dir, "results.md"), "w", encoding="utf-8") as f:
         f.write(f"Seeds {seeds}; test = 9 official UCI test subjects; std = sample std (ddof=1) over seeds.\n\n{table}\n")
-    plot(args.run_dir, test, seeds, budgets, conds)
+    man = os.path.join(args.run_dir, "split_manifest.json")
+    block_len = load(man)["block_len"] if os.path.exists(man) else 4
+    plot(args.run_dir, test, seeds, budgets, conds, block_len)
     print(table)
     return table
 
 
-def plot(run_dir, test, seeds, budgets, conds):
+def plot(run_dir, test, seeds, budgets, conds, block_len=4):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -491,7 +586,8 @@ def plot(run_dir, test, seeds, budgets, conds):
             ax.scatter(x, row, s=10, color=colors[c], alpha=0.5, lw=0)
     ax.set_xscale("log")
     ax.set_xticks(x, [f"{b:g}%" for b in x])
-    ax.set_xlabel("Labeled training windows (% of 5,867, block-sampled)")
+    sampler = f"{block_len}-window blocks" if block_len > 1 else "single windows, subject round-robin"
+    ax.set_xlabel(f"Labeled training windows (% of 5,867; {sampler})")
     ax.set_ylabel("Test macro-F1 (9 unseen subjects)")
     ax.grid(alpha=0.3, lw=0.5)
     ax.spines[["top", "right"]].set_visible(False)

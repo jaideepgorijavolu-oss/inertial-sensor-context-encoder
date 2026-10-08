@@ -195,3 +195,45 @@ def test_study_cli_end_to_end_without_touching_test_until_evaluation(uci_dir, tm
     k = "1/1.0/sup"
     cm = np.array(test["entries"][k]["confusion_matrix"])
     assert cm.sum() == test["n_test"] == len(test["entries"][k]["predictions"])
+
+
+def test_weighted_knn_exact_match_survives_float32_rounding():
+    # Find a float32 vector whose normalized self-similarity rounds above 1 (the reviewed failure).
+    rng = np.random.default_rng(0)
+    for _ in range(10000):
+        v = rng.normal(size=(1, 256)).astype(np.float32)
+        n = v / np.linalg.norm(v, axis=1, keepdims=True)
+        if (n @ n.T)[0, 0] > 1.0:
+            break
+    else:
+        pytest.skip("no float32 rounding case found")
+    ref = np.vstack([v, -v, -v * 2]).astype(np.float32)
+    assert list(lowlabel.knn_predict(ref, np.array([5, 0, 0]), v, 1, True)) == [5]
+    assert list(lowlabel.knn_predict(ref, np.array([5, 0, 0]), v, 3, True)) == [5]
+
+
+def test_reuse_with_different_settings_or_changed_files_is_refused(uci_dir, tmp_path):
+    run = str(tmp_path / "run")
+    base = ["--data-dir", uci_dir, "--run-dir", run, "--ssl-epochs", "1", "--cpu", "--seeds", "1",
+            "--budgets", "1.0", "--conditions", "sup", "ssl_probe"]
+    lowlabel.main(["stage-a", *base, "--steps", "4"])
+    with pytest.raises(RuntimeError, match="already has"):
+        lowlabel.main(["stage-a", *base, "--steps", "4"])                  # published tuning kept
+    lowlabel.main(["stage-b", *base, "--steps", "4"])
+    lowlabel.main(["stage-b", *base, "--steps", "4"])                      # identical rerun: allowed
+    for changed in (["--steps", "8"], ["--steps", "4", "--block-len", "1"]):
+        with pytest.raises(RuntimeError, match="different settings"):
+            lowlabel.main(["stage-b", *base, *changed])
+    sel = json.load(open(os.path.join(run, "selections.json")))
+    ck = os.path.join(run, sel["entries"]["1/1.0/sup"]["checkpoint"])
+    with open(ck, "ab") as f:
+        f.write(b"x")
+    with pytest.raises(RuntimeError, match="checkpoint changed"):
+        lowlabel.main(["stage-b", *base, "--steps", "4"])
+    ssl_pt = [f for f in os.listdir(os.path.join(run, "ssl")) if f.endswith(".pt")][0]
+    with open(os.path.join(run, "ssl", ssl_pt), "ab") as f:
+        f.write(b"x")
+    other = str(tmp_path / "other")
+    with pytest.raises(RuntimeError, match="checkpoint changed"):          # shared SSL cache verified
+        lowlabel.main(["stage-b", *base[:3], other, *base[4:], "--steps", "4",
+                       "--stage-a", os.path.join(run, "stage_a.json"), "--ssl-cache", os.path.join(run, "ssl")])
