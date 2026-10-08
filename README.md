@@ -52,6 +52,35 @@ Full method and discussion: [TECHNICAL_NOTE.md](TECHNICAL_NOTE.md).
 
 ---
 
+## Follow-up study: contrastive pretraining under limited labels
+
+Does SimCLR-style pretraining of the same 1D-CNN on unlabeled training-subject windows help when labels are scarce?
+Inductive protocol locked before any run: test subjects never enter pretraining, normalization, selection or kNN references;
+labels are sampled as contiguous blocks recovered from the 50% window overlap; validation labels scale with the budget.
+Validation selections were committed before the one-time test evaluation.
+
+| Condition (test macro-F1, 3 seeds) | 1% labels (59) | 10% (587) | 100% (5,867) |
+| :--- | ---: | ---: | ---: |
+| Supervised CNN | 0.800 ± 0.014 | 0.913 ± 0.008 | 0.926 ± 0.011 |
+| Supervised CNN + same augmentations | 0.830 ± 0.019 | 0.900 ± 0.023 | 0.906 ± 0.005 |
+| SimCLR, frozen + linear probe (1.5K params) | 0.778 ± 0.011 | 0.899 ± 0.006 | **0.950 ± 0.004** |
+| SimCLR + full fine-tune | **0.847 ± 0.021** | 0.915 ± 0.012 | 0.932 ± 0.008 |
+
+- At 1% labels, pretraining + fine-tuning beats the from-scratch CNN in all 3 seeds (+0.047), but most of that gain is
+  matched by training the CNN with the same augmentations (+0.017, mixed across seeds).
+- With all labels, a frozen SimCLR encoder + linear probe is the best model in either study (0.950, +0.024 over the CNN
+  in every seed), almost entirely from the hard Sitting/Standing pair.
+- The legacy direct CNN was retrained and reproduced bit-exactly.
+
+Report, protocol, audit and raw artifacts: [`results/sensor_contrastive/`](results/sensor_contrastive/REPORT.md).
+
+```bash
+python -m src.lowlabel stage-a && python -m src.lowlabel stage-b    # validation-only tuning and selection (~5 min GPU)
+python -m src.lowlabel evaluate-test && python -m src.lowlabel report
+```
+
+---
+
 ## Method
 
 ```text
