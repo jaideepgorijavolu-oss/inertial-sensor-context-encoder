@@ -518,6 +518,7 @@ def parse_args(argv=None):
 
 def main(argv=None):
     args = parse_args(argv)
+    sys.stdout.reconfigure(errors="replace")  # Windows consoles: cp1252 lacks the minus sign
     device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
     if args.command == "report":
         return report(args)
