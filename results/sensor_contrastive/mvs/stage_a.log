@@ -1,0 +1,100 @@
+device cuda | pool 5867 | val 1485
+  [ssl tau=0.1] epoch 001 loss 2.3503 norm_std 0.0408 erank 111.2
+  [ssl tau=0.1] epoch 010 loss 0.5669 norm_std 0.0389 erank 87.1
+  [ssl tau=0.1] epoch 020 loss 0.4383 norm_std 0.0393 erank 80.2
+  [ssl tau=0.1] epoch 030 loss 0.3822 norm_std 0.0395 erank 78.1
+  [ssl tau=0.1] epoch 040 loss 0.3683 norm_std 0.0399 erank 77.4
+  [ssl tau=0.1] epoch 050 loss 0.3504 norm_std 0.0399 erank 78.0
+  [ssl tau=0.1] epoch 060 loss 0.3189 norm_std 0.0402 erank 76.9
+  [ssl tau=0.1] epoch 070 loss 0.3088 norm_std 0.0400 erank 77.7
+  [ssl tau=0.1] epoch 080 loss 0.2690 norm_std 0.0400 erank 77.7
+  [ssl tau=0.1] epoch 090 loss 0.2597 norm_std 0.0401 erank 77.5
+  [ssl tau=0.1] epoch 100 loss 0.2605 norm_std 0.0400 erank 77.5
+  [ssl tau=0.1] epoch 110 loss 0.2465 norm_std 0.0401 erank 77.0
+  [ssl tau=0.1] epoch 120 loss 0.2405 norm_std 0.0401 erank 77.4
+  [ssl tau=0.1] epoch 130 loss 0.2281 norm_std 0.0401 erank 77.5
+  [ssl tau=0.1] epoch 140 loss 0.2256 norm_std 0.0401 erank 77.4
+  [ssl tau=0.1] epoch 150 loss 0.2254 norm_std 0.0400 erank 77.0
+  [ssl tau=0.1] epoch 160 loss 0.2151 norm_std 0.0401 erank 77.3
+  [ssl tau=0.1] epoch 170 loss 0.2148 norm_std 0.0400 erank 77.0
+  [ssl tau=0.1] epoch 180 loss 0.2162 norm_std 0.0400 erank 76.8
+  [ssl tau=0.1] epoch 190 loss 0.2146 norm_std 0.0400 erank 77.0
+  [ssl tau=0.1] epoch 200 loss 0.2122 norm_std 0.0400 erank 77.0
+stage A ssl tau=0.1 aug=weak: probe val F1 0.9120
+  [ssl tau=0.1] epoch 001 loss 3.2513 norm_std 0.0387 erank 106.2
+  [ssl tau=0.1] epoch 010 loss 1.3627 norm_std 0.0393 erank 83.9
+  [ssl tau=0.1] epoch 020 loss 1.1764 norm_std 0.0398 erank 81.2
+  [ssl tau=0.1] epoch 030 loss 1.0571 norm_std 0.0398 erank 78.4
+  [ssl tau=0.1] epoch 040 loss 1.0059 norm_std 0.0399 erank 79.3
+  [ssl tau=0.1] epoch 050 loss 0.9387 norm_std 0.0399 erank 78.4
+  [ssl tau=0.1] epoch 060 loss 0.9309 norm_std 0.0400 erank 79.6
+  [ssl tau=0.1] epoch 070 loss 0.9079 norm_std 0.0400 erank 79.2
+  [ssl tau=0.1] epoch 080 loss 0.8423 norm_std 0.0399 erank 79.4
+  [ssl tau=0.1] epoch 090 loss 0.8363 norm_std 0.0399 erank 78.9
+  [ssl tau=0.1] epoch 100 loss 0.8077 norm_std 0.0399 erank 79.4
+  [ssl tau=0.1] epoch 110 loss 0.7956 norm_std 0.0397 erank 79.8
+  [ssl tau=0.1] epoch 120 loss 0.7814 norm_std 0.0398 erank 79.3
+  [ssl tau=0.1] epoch 130 loss 0.7638 norm_std 0.0398 erank 80.2
+  [ssl tau=0.1] epoch 140 loss 0.7533 norm_std 0.0398 erank 80.1
+  [ssl tau=0.1] epoch 150 loss 0.7497 norm_std 0.0398 erank 80.5
+  [ssl tau=0.1] epoch 160 loss 0.7292 norm_std 0.0399 erank 80.4
+  [ssl tau=0.1] epoch 170 loss 0.7347 norm_std 0.0398 erank 80.2
+  [ssl tau=0.1] epoch 180 loss 0.7401 norm_std 0.0399 erank 80.2
+  [ssl tau=0.1] epoch 190 loss 0.7163 norm_std 0.0398 erank 80.3
+  [ssl tau=0.1] epoch 200 loss 0.7163 norm_std 0.0398 erank 80.5
+stage A ssl tau=0.1 aug=strong: probe val F1 0.9602
+  [ssl tau=0.5] epoch 001 loss 4.8513 norm_std 0.0462 erank 57.3
+  [ssl tau=0.5] epoch 010 loss 4.4464 norm_std 0.0444 erank 65.0
+  [ssl tau=0.5] epoch 020 loss 4.4182 norm_std 0.0446 erank 63.7
+  [ssl tau=0.5] epoch 030 loss 4.4015 norm_std 0.0443 erank 65.1
+  [ssl tau=0.5] epoch 040 loss 4.3973 norm_std 0.0442 erank 65.6
+  [ssl tau=0.5] epoch 050 loss 4.3891 norm_std 0.0443 erank 67.5
+  [ssl tau=0.5] epoch 060 loss 4.3826 norm_std 0.0443 erank 68.8
+  [ssl tau=0.5] epoch 070 loss 4.3772 norm_std 0.0440 erank 70.4
+  [ssl tau=0.5] epoch 080 loss 4.3709 norm_std 0.0440 erank 72.6
+  [ssl tau=0.5] epoch 090 loss 4.3706 norm_std 0.0439 erank 73.2
+  [ssl tau=0.5] epoch 100 loss 4.3666 norm_std 0.0440 erank 73.7
+  [ssl tau=0.5] epoch 110 loss 4.3629 norm_std 0.0439 erank 74.3
+  [ssl tau=0.5] epoch 120 loss 4.3606 norm_std 0.0440 erank 75.4
+  [ssl tau=0.5] epoch 130 loss 4.3573 norm_std 0.0439 erank 76.2
+  [ssl tau=0.5] epoch 140 loss 4.3561 norm_std 0.0439 erank 76.6
+  [ssl tau=0.5] epoch 150 loss 4.3535 norm_std 0.0439 erank 76.6
+  [ssl tau=0.5] epoch 160 loss 4.3540 norm_std 0.0438 erank 76.9
+  [ssl tau=0.5] epoch 170 loss 4.3530 norm_std 0.0438 erank 77.0
+  [ssl tau=0.5] epoch 180 loss 4.3554 norm_std 0.0438 erank 77.0
+  [ssl tau=0.5] epoch 190 loss 4.3530 norm_std 0.0438 erank 77.2
+  [ssl tau=0.5] epoch 200 loss 4.3517 norm_std 0.0438 erank 77.2
+stage A ssl tau=0.5 aug=weak: probe val F1 0.9067
+  [ssl tau=0.5] epoch 001 loss 5.0750 norm_std 0.0446 erank 52.8
+  [ssl tau=0.5] epoch 010 loss 4.5929 norm_std 0.0438 erank 57.6
+  [ssl tau=0.5] epoch 020 loss 4.5485 norm_std 0.0443 erank 56.5
+  [ssl tau=0.5] epoch 030 loss 4.5244 norm_std 0.0439 erank 57.3
+  [ssl tau=0.5] epoch 040 loss 4.5247 norm_std 0.0439 erank 58.2
+  [ssl tau=0.5] epoch 050 loss 4.5110 norm_std 0.0437 erank 61.4
+  [ssl tau=0.5] epoch 060 loss 4.5039 norm_std 0.0437 erank 62.7
+  [ssl tau=0.5] epoch 070 loss 4.4998 norm_std 0.0435 erank 63.8
+  [ssl tau=0.5] epoch 080 loss 4.4881 norm_std 0.0434 erank 66.1
+  [ssl tau=0.5] epoch 090 loss 4.4905 norm_std 0.0435 erank 65.6
+  [ssl tau=0.5] epoch 100 loss 4.4815 norm_std 0.0432 erank 67.6
+  [ssl tau=0.5] epoch 110 loss 4.4781 norm_std 0.0431 erank 68.1
+  [ssl tau=0.5] epoch 120 loss 4.4748 norm_std 0.0431 erank 69.0
+  [ssl tau=0.5] epoch 130 loss 4.4701 norm_std 0.0429 erank 69.6
+  [ssl tau=0.5] epoch 140 loss 4.4676 norm_std 0.0429 erank 70.2
+  [ssl tau=0.5] epoch 150 loss 4.4640 norm_std 0.0429 erank 70.1
+  [ssl tau=0.5] epoch 160 loss 4.4625 norm_std 0.0429 erank 70.4
+  [ssl tau=0.5] epoch 170 loss 4.4630 norm_std 0.0428 erank 70.7
+  [ssl tau=0.5] epoch 180 loss 4.4639 norm_std 0.0428 erank 70.7
+  [ssl tau=0.5] epoch 190 loss 4.4615 norm_std 0.0428 erank 70.8
+  [ssl tau=0.5] epoch 200 loss 4.4596 norm_std 0.0428 erank 70.8
+stage A ssl tau=0.5 aug=strong: probe val F1 0.9429
+stage A sup lr=0.001 wd=0.0001: val F1 0.9250
+stage A sup lr=0.001 wd=0.01: val F1 0.9250
+stage A sup lr=0.0003 wd=0.0001: val F1 0.9250
+stage A sup lr=0.0003 wd=0.01: val F1 0.9250
+stage A sup_aug lr=0.001 wd=0.0001: val F1 0.9686
+stage A sup_aug lr=0.001 wd=0.01: val F1 0.9686
+stage A sup_aug lr=0.0003 wd=0.0001: val F1 0.9561
+stage A sup_aug lr=0.0003 wd=0.01: val F1 0.9561
+stage A ssl_ft lr=0.001: val F1 0.9250
+stage A ssl_ft lr=0.0001: val F1 0.9250
+exit 0

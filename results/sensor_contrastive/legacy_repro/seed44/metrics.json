@@ -1,0 +1,203 @@
+{
+  "schema_version": 2,
+  "run_key": {
+    "data_dir": "data\\UCI HAR Dataset",
+    "epochs": 15,
+    "context_epochs": 15,
+    "lr": 0.001,
+    "context_lr": 0.0005,
+    "batch_size": 64,
+    "llm": "HuggingFaceTB/SmolLM2-360M-Instruct",
+    "llm_dim": 960,
+    "shuffle_repeats": 5,
+    "no_standardize": false
+  },
+  "results": {
+    "standardizer": {
+      "mean": [
+        0.8058244585990906,
+        0.029005322605371475,
+        0.08012132346630096,
+        -0.0007941430085338652,
+        -0.0002519475237932056,
+        -0.0003059437149204314,
+        0.004766484256833792,
+        -0.002092034788802266,
+        -0.000882287451531738
+      ],
+      "std": [
+        0.4103213846683502,
+        0.39971351623535156,
+        0.3540666103363037,
+        0.19705669581890106,
+        0.1265248954296112,
+        0.10837171226739883,
+        0.40885600447654724,
+        0.3830430507659912,
+        0.25839295983314514
+      ]
+    },
+    "direct": {
+      "macro_f1": 0.9369216584828113,
+      "accuracy": 0.9362063115032236,
+      "per_class_f1": {
+        "walking": 0.998992950654582,
+        "walking_upstairs": 0.9554140127388535,
+        "walking_downstairs": 0.9766899766899767,
+        "sitting": 0.8331668331668332,
+        "standing": 0.861900097943193,
+        "laying": 0.995366079703429
+      },
+      "confusion_matrix": [
+        [
+          496,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          450,
+          19,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          419,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          20,
+          0,
+          417,
+          49,
+          5
+        ],
+        [
+          0,
+          0,
+          0,
+          92,
+          440,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          537
+        ]
+      ],
+      "trainable_params": 146182,
+      "frozen_params": 0,
+      "latency_ms": 0.5130000000690416,
+      "latency_device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+      "settings": {},
+      "provenance": {
+        "schema_version": 2,
+        "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "trained_at": "2026-10-08T02:14:04+00:00",
+        "python": "3.14.6",
+        "torch": "2.14.1+cu130",
+        "cuda": "13.0",
+        "transformers": "5.18.0",
+        "scikit_learn": "1.9.1",
+        "numpy": "2.5.3",
+        "git_commit": "3ac556249e039ffc53c7dccf986aed8fc0d31927",
+        "git_dirty": true,
+        "dataset_labels_sha256": "e51183a44b7747048ea53043bc1286862d1044d580efea9a24cef291d08bda2b",
+        "llm": "HuggingFaceTB/SmolLM2-360M-Instruct",
+        "llm_revision": null
+      },
+      "best_val_macro_f1": 0.9433242087883071,
+      "best_epoch": 7,
+      "history": [
+        {
+          "epoch": 1,
+          "train_loss": 0.2760348029272712,
+          "val_macro_f1": 0.9283562540929928
+        },
+        {
+          "epoch": 2,
+          "train_loss": 0.11080298149634314,
+          "val_macro_f1": 0.9208464821639345
+        },
+        {
+          "epoch": 3,
+          "train_loss": 0.10195107938235869,
+          "val_macro_f1": 0.9253133673560748
+        },
+        {
+          "epoch": 4,
+          "train_loss": 0.09848212509456536,
+          "val_macro_f1": 0.9344735608265679
+        },
+        {
+          "epoch": 5,
+          "train_loss": 0.09352240828878206,
+          "val_macro_f1": 0.9427130684350322
+        },
+        {
+          "epoch": 6,
+          "train_loss": 0.0912227326720629,
+          "val_macro_f1": 0.9433151147436862
+        },
+        {
+          "epoch": 7,
+          "train_loss": 0.08613429457435141,
+          "val_macro_f1": 0.9433242087883071
+        },
+        {
+          "epoch": 8,
+          "train_loss": 0.07699590876860463,
+          "val_macro_f1": 0.9309586439920695
+        },
+        {
+          "epoch": 9,
+          "train_loss": 0.07711518679381064,
+          "val_macro_f1": 0.9272342114235569
+        },
+        {
+          "epoch": 10,
+          "train_loss": 0.07685715879273156,
+          "val_macro_f1": 0.9377960024616702
+        },
+        {
+          "epoch": 11,
+          "train_loss": 0.07502509153488537,
+          "val_macro_f1": 0.9211522280588249
+        },
+        {
+          "epoch": 12,
+          "train_loss": 0.07106515001910536,
+          "val_macro_f1": 0.926500228427078
+        },
+        {
+          "epoch": 13,
+          "train_loss": 0.06800470297710727,
+          "val_macro_f1": 0.9377326905048883
+        },
+        {
+          "epoch": 14,
+          "train_loss": 0.06486865634139141,
+          "val_macro_f1": 0.9282791776630974
+        },
+        {
+          "epoch": 15,
+          "train_loss": 0.06706858781652282,
+          "val_macro_f1": 0.9289502208128421
+        }
+      ]
+    }
+  }
+}

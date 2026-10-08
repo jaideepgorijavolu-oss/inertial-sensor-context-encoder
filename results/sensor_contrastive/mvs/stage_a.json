@@ -1,0 +1,132 @@
+{
+  "seed": 42,
+  "budget": 0.1,
+  "n_train_labels": 587,
+  "n_val_labels": 148,
+  "ssl": [
+    {
+      "tau": 0.1,
+      "aug": "weak",
+      "val_macro_f1": 0.9119634076832247,
+      "C": 1.0,
+      "final_loss": 0.21215905587781558,
+      "final_norm_std": 0.04003612697124481
+    },
+    {
+      "tau": 0.1,
+      "aug": "strong",
+      "val_macro_f1": 0.9601778656126482,
+      "C": 1.0,
+      "final_loss": 0.7163175127723,
+      "final_norm_std": 0.03984783589839935
+    },
+    {
+      "tau": 0.5,
+      "aug": "weak",
+      "val_macro_f1": 0.9067131144175088,
+      "C": 0.01,
+      "final_loss": 4.3516998724503955,
+      "final_norm_std": 0.043812669813632965
+    },
+    {
+      "tau": 0.5,
+      "aug": "strong",
+      "val_macro_f1": 0.9429374201787994,
+      "C": 10.0,
+      "final_loss": 4.459634108976885,
+      "final_norm_std": 0.042822204530239105
+    }
+  ],
+  "sup": [
+    {
+      "lr": 0.001,
+      "wd": 0.0001,
+      "val_macro_f1": 0.9249999999999999
+    },
+    {
+      "lr": 0.001,
+      "wd": 0.01,
+      "val_macro_f1": 0.9249999999999999
+    },
+    {
+      "lr": 0.0003,
+      "wd": 0.0001,
+      "val_macro_f1": 0.9249999999999999
+    },
+    {
+      "lr": 0.0003,
+      "wd": 0.01,
+      "val_macro_f1": 0.9249999999999999
+    }
+  ],
+  "sup_aug": [
+    {
+      "lr": 0.001,
+      "wd": 0.0001,
+      "val_macro_f1": 0.968608301360307
+    },
+    {
+      "lr": 0.001,
+      "wd": 0.01,
+      "val_macro_f1": 0.968608301360307
+    },
+    {
+      "lr": 0.0003,
+      "wd": 0.0001,
+      "val_macro_f1": 0.9560516219044297
+    },
+    {
+      "lr": 0.0003,
+      "wd": 0.01,
+      "val_macro_f1": 0.9560516219044297
+    }
+  ],
+  "ssl_ft": [
+    {
+      "lr": 0.001,
+      "wd": 0.0001,
+      "val_macro_f1": 0.9249999999999999
+    },
+    {
+      "lr": 0.0001,
+      "wd": 0.0001,
+      "val_macro_f1": 0.9249999999999999
+    }
+  ],
+  "chosen": {
+    "ssl": {
+      "tau": 0.1,
+      "aug": "strong"
+    },
+    "sup": {
+      "lr": 0.001,
+      "wd": 0.0001
+    },
+    "sup_aug": {
+      "lr": 0.001,
+      "wd": 0.0001
+    },
+    "ssl_ft": {
+      "lr": 0.001,
+      "wd": 0.0001
+    }
+  },
+  "environment": {
+    "time_utc": "2026-10-08T02:09:12+00:00",
+    "git_commit": "3ac556249e039ffc53c7dccf986aed8fc0d31927",
+    "git_dirty": true,
+    "git_diff_sha256": null,
+    "python": "3.14.6",
+    "torch": "2.14.1+cu130",
+    "cuda": "13.0",
+    "numpy": "2.5.3",
+    "scikit_learn": "1.9.1",
+    "device": "NVIDIA GeForce RTX 5060 Laptop GPU",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "data_sha256": "d59f95b85125448338c0e928c017dc72b956c8b42c69ce3a6531fe9de76600e9",
+    "argv": [
+      "C:\\Users\\Jai Gori\\Downloads\\inertial-sensor-context-encoder\\src\\lowlabel.py",
+      "stage-a"
+    ]
+  }
+}

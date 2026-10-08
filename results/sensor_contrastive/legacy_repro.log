@@ -1,0 +1,67 @@
+Device: NVIDIA GeForce RTX 5060 Laptop GPU | seeds: [42, 43, 44] | conditions: ['direct']
+
+=== seed 42 | Direct sensor classifier ===
+  trainable params 146,182 | frozen params 0
+  [direct] epoch 01/15 | train loss 0.2894 | val macro-F1 0.9427
+  [direct] epoch 02/15 | train loss 0.1117 | val macro-F1 0.9414
+  [direct] epoch 03/15 | train loss 0.0983 | val macro-F1 0.9433
+  [direct] epoch 04/15 | train loss 0.0930 | val macro-F1 0.9337
+  [direct] epoch 05/15 | train loss 0.0956 | val macro-F1 0.9365
+  [direct] epoch 06/15 | train loss 0.0879 | val macro-F1 0.9329
+  [direct] epoch 07/15 | train loss 0.0853 | val macro-F1 0.9347
+  [direct] epoch 08/15 | train loss 0.0802 | val macro-F1 0.9347
+  [direct] epoch 09/15 | train loss 0.0784 | val macro-F1 0.9439
+  [direct] epoch 10/15 | train loss 0.0814 | val macro-F1 0.9445
+  [direct] epoch 11/15 | train loss 0.0721 | val macro-F1 0.9284
+  [direct] epoch 12/15 | train loss 0.0726 | val macro-F1 0.9415
+  [direct] epoch 13/15 | train loss 0.0713 | val macro-F1 0.9371
+  [direct] epoch 14/15 | train loss 0.0662 | val macro-F1 0.9277
+  [direct] epoch 15/15 | train loss 0.0699 | val macro-F1 0.9371
+  --> test macro-F1 0.9368
+
+=== seed 43 | Direct sensor classifier ===
+  trainable params 146,182 | frozen params 0
+  [direct] epoch 01/15 | train loss 0.2891 | val macro-F1 0.9412
+  [direct] epoch 02/15 | train loss 0.1140 | val macro-F1 0.9377
+  [direct] epoch 03/15 | train loss 0.0999 | val macro-F1 0.9365
+  [direct] epoch 04/15 | train loss 0.0972 | val macro-F1 0.9427
+  [direct] epoch 05/15 | train loss 0.0890 | val macro-F1 0.9239
+  [direct] epoch 06/15 | train loss 0.0930 | val macro-F1 0.9234
+  [direct] epoch 07/15 | train loss 0.0851 | val macro-F1 0.9233
+  [direct] epoch 08/15 | train loss 0.0824 | val macro-F1 0.9307
+  [direct] epoch 09/15 | train loss 0.0803 | val macro-F1 0.9153
+  [direct] epoch 10/15 | train loss 0.0742 | val macro-F1 0.9202
+  [direct] epoch 11/15 | train loss 0.0758 | val macro-F1 0.9048
+  [direct] epoch 12/15 | train loss 0.0724 | val macro-F1 0.9301
+  [direct] epoch 13/15 | train loss 0.0705 | val macro-F1 0.9233
+  [direct] epoch 14/15 | train loss 0.0711 | val macro-F1 0.9227
+  [direct] epoch 15/15 | train loss 0.0688 | val macro-F1 0.9091
+  --> test macro-F1 0.9272
+
+=== seed 44 | Direct sensor classifier ===
+  trainable params 146,182 | frozen params 0
+  [direct] epoch 01/15 | train loss 0.2760 | val macro-F1 0.9284
+  [direct] epoch 02/15 | train loss 0.1108 | val macro-F1 0.9208
+  [direct] epoch 03/15 | train loss 0.1020 | val macro-F1 0.9253
+  [direct] epoch 04/15 | train loss 0.0985 | val macro-F1 0.9345
+  [direct] epoch 05/15 | train loss 0.0935 | val macro-F1 0.9427
+  [direct] epoch 06/15 | train loss 0.0912 | val macro-F1 0.9433
+  [direct] epoch 07/15 | train loss 0.0861 | val macro-F1 0.9433
+  [direct] epoch 08/15 | train loss 0.0770 | val macro-F1 0.9310
+  [direct] epoch 09/15 | train loss 0.0771 | val macro-F1 0.9272
+  [direct] epoch 10/15 | train loss 0.0769 | val macro-F1 0.9378
+  [direct] epoch 11/15 | train loss 0.0750 | val macro-F1 0.9212
+  [direct] epoch 12/15 | train loss 0.0711 | val macro-F1 0.9265
+  [direct] epoch 13/15 | train loss 0.0680 | val macro-F1 0.9377
+  [direct] epoch 14/15 | train loss 0.0649 | val macro-F1 0.9283
+  [direct] epoch 15/15 | train loss 0.0671 | val macro-F1 0.9290
+  --> test macro-F1 0.9369
+
+Seeds: [42, 43, 44] | epochs: 15 (context: 15) | sensor tokens (multi-token): 8 | LoRA rank: 8 | standardized inputs: True | trained on: ['NVIDIA GeForce RTX 5060 Laptop GPU'] | report generated on: NVIDIA GeForce RTX 5060 Laptop GPU
+
+| Condition | Test Macro-F1 (mean ± std) | Trainable params | Latency ms/window |
+| :--- | :--- | ---: | ---: |
+| Direct sensor classifier | 0.9337 ± 0.0056 | 146,182 | 0.54 |
+
+Saved results/sensor_contrastive/legacy_repro/results.json and results/sensor_contrastive/legacy_repro/results.md
+exit 0
