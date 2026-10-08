@@ -90,12 +90,28 @@ Embedding dimension: 256.
 
 ## Comparison with published work
 
-The method is SimCLR's NT-Xent objective (Chen et al., 2020) applied to the existing CNN. It follows Tang et al.
-(2020) in applying SimCLR to HAR, and Haresamudram, Essa & Plötz (2022) in evaluating with frozen linear probes
-across label budgets. Their reported numbers use different datasets and splits (often random rather than
-subject-held-out, and different label-sampling schemes), so they are **not yet quoted**. That comparison is
-pending: it needs the papers' exact tables, which were not fetched in this session, and no figure is
-reproduced from memory.
+Sources were checked on 2026-10-07: the arXiv abstracts, plus the full text of Haresamudram et al.
+
+- **SimCLR** (Chen et al., 2020, arXiv:2002.05709): the NT-Xent objective, the projection head and the use of
+  pre-head features are taken from here. The adaptations are to a 1D-CNN and to physics-consistent IMU
+  augmentations.
+- **Tang, Perez-Pozuelo, Spathis & Mascolo (2020)**, "Exploring Contrastive Learning in Human Activity
+  Recognition for Healthcare" (NeurIPS 2020 ML4H workshop, arXiv:2011.11542). They tested 64 transformation
+  combinations for SimCLR on HAR and found that **random rotation with fine-tuning** gave the best result, improving
+  over supervised and unsupervised baselines. **This study agrees on both points:** rotation is the augmentation the
+  gain depends on (ablation), and fine-tuning beats the frozen probe at low budgets. It adds two qualifications:
+  the gain over a from-scratch CNN is confined to the 1 % budget on subject-held-out UCI HAR, and an
+  augmentation-matched supervised baseline absorbs much of it.
+- **Haresamudram, Essa & Plötz (2022)**, "Assessing the State of Self-Supervised Human Activity Recognition using
+  Wearables" (IMWUT 6(3), arXiv:2202.12938). They pretrain seven SSL methods, including SimCLR, on the large
+  Capture-24 dataset and evaluate *frozen* encoders with an MLP classifier on other target datasets. They also
+  vary the amount of pretraining data and labeled data. Their SimCLR rotation draws axis and angle uniformly.
+  **Differences:** this study pretrains in-domain on only 17 subjects, evaluates on held-out subjects of the same
+  dataset, and restricts rotation to ±30° so that gravity direction can still separate postures. It also adds
+  end-to-end fine-tuning. The frozen-vs-fine-tune crossover found here (frozen worse at 1 %, better at 100 %) is a
+  reason not to read frozen-encoder benchmarks alone as a measure of what pretraining offers at low labels.
+- No absolute scores from these papers are compared: their datasets, splits and label-sampling schemes differ, so
+  the numbers are not commensurable.
 
 ## Limitations
 

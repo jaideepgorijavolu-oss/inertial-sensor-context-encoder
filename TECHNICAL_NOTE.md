@@ -71,7 +71,7 @@ Mean per-class F1 over seeds:
 
 ## 5. Findings
 
-1. **A frozen LLM reading raw sensor embeddings matches a dedicated CNN.** One soft token into frozen SmolLM2-360M reaches 0.933 ± 0.003 macro-F1, statistically indistinguishable from the direct CNN (0.934 ± 0.006).
+1. **A frozen LLM reading raw sensor embeddings matches a dedicated CNN.** One soft token into frozen SmolLM2-360M reaches 0.933 ± 0.003 macro-F1, within seed-to-seed spread of the direct CNN (0.934 ± 0.006; 3 seeds, no significance test).
 2. **Predictions depend on the sensor input.** Pairing every test label with an unrelated window (global shuffle) drops every LLM model to 0.163–0.164 macro-F1, chance level for 6 classes; replacing the sensor tokens with zeros gives 0.048–0.050 (a single constant prediction). The prompt alone carries no class information.
 3. **LoRA gives the most stable LLM result.** Rank-8 adapters reach 0.934 ± 0.002, tying the CNN with the lowest seed-to-seed variance of any condition.
 4. **No clear gain from the LLM at matched capacity.** The frozen-LLM and LoRA models score about 0.8 points above the parameter-matched network without the LLM (0.925 ± 0.013), but the gap is within its seed-to-seed spread across 3 seeds.
