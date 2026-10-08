@@ -114,3 +114,64 @@ The 5 % and 25 % budgets, i.i.d. sampling sensitivity and the rotation ablation 
 4. Why is "SimCLR + fine-tune beats supervised at 1 %" weaker evidence once `sup_aug` is included?
 5. Why exclude full SO(3) rotation, and what does the `sup_aug` Sitting F1 drop suggest about even 30°?
 6. Why does the frozen probe beat fine-tuning at 100 % but lose at 1 %?
+
+## Expansion (Amendment 1): more budgets, i.i.d. sampling, rotation ablation
+
+Methods and stage-A choices are unchanged; the SSL encoders are reused. Each run had its own selections committed
+(commit `816dcea`) before its single test evaluation. Values are test macro-F1, mean over seeds 42/43/44,
+with per-seed paired differences.
+
+**5 % and 25 % budgets** (`budgets_5_25/`):
+
+| Condition | 5 % (293) | 25 % (1467) |
+| :--- | ---: | ---: |
+| Supervised CNN | 0.899 ± 0.019 | 0.935 ± 0.007 |
+| Supervised CNN + aug | 0.884 ± 0.023 | 0.906 ± 0.006 |
+| SimCLR + linear probe | 0.892 ± 0.009 | 0.930 ± 0.008 |
+| SimCLR + fine-tune | 0.902 ± 0.008 | 0.926 ± 0.016 |
+
+Fine-tune − supervised: +0.004 (+0.028 / −0.007 / −0.009) at 5 %, and −0.009 at 25 %. There is no pretraining
+advantage over plain supervision between 5 % and 25 %.
+
+**i.i.d. window sampling instead of blocks** (`iid/`, 1 % and 10 %):
+
+| Condition | 1 % | 10 % |
+| :--- | ---: | ---: |
+| Supervised CNN | 0.861 ± 0.014 | 0.922 ± 0.012 |
+| Supervised CNN + aug | 0.866 ± 0.012 | 0.912 ± 0.016 |
+| SimCLR + linear probe | 0.822 ± 0.028 | 0.917 ± 0.010 |
+| SimCLR + fine-tune | **0.884 ± 0.005** | **0.929 ± 0.009** |
+
+- Every method scores higher than under block sampling at the same window count (supervised at 1 %: 0.861 vs
+  0.800). Overlapping, contiguous labels carry less information per window, so i.i.d. sampling overstates what a
+  real annotation budget buys.
+- The 1 % fine-tune advantage holds: +0.023 over the supervised CNN (+0.030 / +0.028 / +0.012, all seeds) and
+  +0.018 over the augmented CNN (+0.000 / +0.030 / +0.023, no seed negative).
+
+**Rotation ablation** (`ablation_norot/`: strong augmentation without the 3-D rotation; validation agrees with test):
+
+| Condition | 1 % | 10 % | 100 % |
+| :--- | ---: | ---: | ---: |
+| SimCLR + linear probe, no rotation | 0.597 ± 0.064 (with: 0.778) | 0.867 ± 0.015 (0.899) | 0.913 ± 0.009 (0.950) |
+| SimCLR + fine-tune, no rotation | 0.760 ± 0.064 (0.847) | 0.913 ± 0.004 (0.915) | 0.920 ± 0.017 (0.932) |
+| Supervised CNN + aug, no rotation | 0.805 ± 0.013 (0.830) | 0.913 ± 0.010 (0.900) | 0.923 ± 0.006 (0.906) |
+
+Mean validation macro-F1 for the probe drops the same way (0.970 → 0.656 at 1 %, 0.947 → 0.938 at 100 %).
+
+**What the ablation teaches.** Rotation is the augmentation that makes the contrastive representation work.
+Without it, the frozen probe falls from 0.950 to 0.913 at 100 %, below the supervised CNN. The 1 % fine-tune
+advantage over the augmented CNN also disappears (−0.044). In supervised training the same rotation *hurts*:
+removing it restores the augmented CNN's Sitting/Standing F1 at 100 % (0.734/0.822 → 0.813/0.847). One reading
+consistent with both results: in the contrastive objective, small orientation changes define *which* windows count as
+the same, forcing features that are robust to placement while still encoding posture. In cross-entropy training,
+the same perturbation only adds label noise to the gravity-direction cue. This is an interpretation, not a tested
+mechanism.
+
+### Updated bottom line
+
+- Contrastive pretraining with fine-tuning helps **only at the smallest budget**: +0.047 (block) and +0.023
+  (i.i.d.) over the same CNN at 1 %, in every seed. From 5 % up, plain supervision matches it.
+- Fine-tuning from SimCLR is at or above the augmentation-matched CNN at every budget on average (+0.015 to
+  +0.026), but at most budgets one seed is negative.
+- With all labels, the frozen SimCLR encoder plus linear probe (0.950) is the best model in either study, and that
+  advantage depends on rotation augmentation.
