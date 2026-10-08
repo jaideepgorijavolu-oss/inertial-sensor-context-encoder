@@ -200,8 +200,8 @@ def test_study_cli_end_to_end_without_touching_test_until_evaluation(uci_dir, tm
 def test_weighted_knn_exact_match_survives_float32_rounding():
     # Find a float32 vector whose normalized self-similarity rounds above 1 (the reviewed failure).
     rng = np.random.default_rng(0)
-    for _ in range(10000):
-        v = rng.normal(size=(1, 256)).astype(np.float32)
+    for trial in range(20000):
+        v = rng.normal(size=(1, 3 + trial % 509)).astype(np.float32)
         n = v / np.linalg.norm(v, axis=1, keepdims=True)
         if (n @ n.T)[0, 0] > 1.0:
             break
@@ -230,7 +230,8 @@ def test_reuse_with_different_settings_or_changed_files_is_refused(uci_dir, tmp_
         f.write(b"x")
     with pytest.raises(RuntimeError, match="checkpoint changed"):
         lowlabel.main(["stage-b", *base, "--steps", "4"])
-    ssl_pt = [f for f in os.listdir(os.path.join(run, "ssl")) if f.endswith(".pt")][0]
+    ch = json.load(open(os.path.join(run, "stage_a.json")))["chosen"]["ssl"]
+    ssl_pt = f"seed1_tau{ch['tau']}_{ch['aug']}_ep1.pt"                   # the encoder stage-b will load
     with open(os.path.join(run, "ssl", ssl_pt), "ab") as f:
         f.write(b"x")
     other = str(tmp_path / "other")
