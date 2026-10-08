@@ -17,6 +17,7 @@ import torch
 STRENGTHS = {
     "weak": dict(scale_sigma=0.1, jitter_sigma=0.05, max_degrees=10.0),
     "strong": dict(scale_sigma=0.2, jitter_sigma=0.1, max_degrees=30.0),
+    "strong_norot": dict(scale_sigma=0.2, jitter_sigma=0.1, max_degrees=30.0, rotate=False),  # ablation
 }
 
 

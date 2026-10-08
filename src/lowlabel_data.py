@@ -136,7 +136,8 @@ def unique_seconds(ids, chains, pos) -> float:
 class StudyData:
     """Training-side data only: pool and validation windows (raw), labels, subjects, chains."""
 
-    def __init__(self, data_dir: str, val_subjects=DEFAULT_VAL_SUBJECTS):
+    def __init__(self, data_dir: str, val_subjects=DEFAULT_VAL_SUBJECTS, block_len: int = BLOCK_LEN):
+        self.block_len = block_len   # 1 = i.i.d. stratified window sampling (sensitivity analysis)
         X = load_signals(data_dir, "train")
         y, s = load_labels_and_subjects(data_dir, "train")
         self.data_dir = data_dir
@@ -155,8 +156,8 @@ class StudyData:
 
     def orders(self, seed: int) -> dict:
         return {
-            "pool": class_orders(self.pool_idx, self.y, self.subjects, self.chains, self.pos, seed, salt=1),
-            "val": class_orders(self.val_idx, self.y, self.subjects, self.chains, self.pos, seed, salt=2),
+            "pool": class_orders(self.pool_idx, self.y, self.subjects, self.chains, self.pos, seed, salt=1, block_len=self.block_len),
+            "val": class_orders(self.val_idx, self.y, self.subjects, self.chains, self.pos, seed, salt=2, block_len=self.block_len),
         }
 
     def subsets(self, seed: int, budget: float) -> dict:

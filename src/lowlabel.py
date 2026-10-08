@@ -266,7 +266,7 @@ def fit_knn(F_tr, y_tr, F_va, y_va) -> dict:
 
 def ssl_encoder(ctx: Ctx, run_dir: str, seed: int, tau: float, aug: str, epochs: int, log=print) -> tuple:
     """Pretrained encoder for (seed, tau, aug), trained once and reused (same inputs and rule)."""
-    path = os.path.join(run_dir, "ssl", f"seed{seed}_tau{tau}_{aug}_ep{epochs}.pt")
+    path = os.path.join(run_dir, f"seed{seed}_tau{tau}_{aug}_ep{epochs}.pt")
     meta_path = path.replace(".pt", ".json")
     if os.path.exists(path) and os.path.exists(meta_path):
         return torch.load(path), load(meta_path)
@@ -292,7 +292,7 @@ def stage_a(args, ctx: Ctx, log=print) -> dict:
     out = {"seed": seed, "budget": b, "n_train_labels": int(len(tr)), "n_val_labels": int(len(va)),
            "ssl": [], "sup": [], "sup_aug": [], "ssl_ft": []}
     for tau, aug in SSL_GRID:
-        state, meta = ssl_encoder(ctx, args.run_dir, seed, tau, aug, args.ssl_epochs, log)
+        state, meta = ssl_encoder(ctx, args.ssl_cache, seed, tau, aug, args.ssl_epochs, log)
         enc = encoder_from(state, ctx.device)
         F_tr, F_va = embed(enc, ctx.norm(ctx.X[tr])), embed(enc, ctx.norm(ctx.X[va]))
         p = fit_probe(F_tr, ctx.data.y[tr], F_va, ctx.data.y[va])
@@ -307,7 +307,7 @@ def stage_a(args, ctx: Ctx, log=print) -> dict:
             _, info = train_classifier(ctx, tr, va, seed, lr, wd, aug, steps=args.steps)
             out[key].append({"lr": lr, "wd": wd, "val_macro_f1": info["val_macro_f1"]})
             log(f"stage A {key} lr={lr} wd={wd}: val F1 {info['val_macro_f1']:.4f}")
-    state, _ = ssl_encoder(ctx, args.run_dir, seed, best_ssl["tau"], best_ssl["aug"], args.ssl_epochs, log)
+    state, _ = ssl_encoder(ctx, args.ssl_cache, seed, best_ssl["tau"], best_ssl["aug"], args.ssl_epochs, log)
     for lr in FT_LR:
         _, info = train_classifier(ctx, tr, va, seed, lr, 1e-4, None, init_encoder=state, steps=args.steps)
         out["ssl_ft"].append({"lr": lr, "wd": 1e-4, "val_macro_f1": info["val_macro_f1"]})
@@ -323,7 +323,9 @@ def stage_a(args, ctx: Ctx, log=print) -> dict:
 
 
 def stage_b(args, ctx: Ctx, log=print) -> dict:
-    chosen = load(os.path.join(args.run_dir, "stage_a.json"))["chosen"]
+    chosen = load(args.stage_a or os.path.join(args.run_dir, "stage_a.json"))["chosen"]
+    if args.ssl_aug:
+        chosen["ssl"]["aug"] = args.ssl_aug             # ablation: SSL and sup_aug augmentations
     sel_path = os.path.join(args.run_dir, "selections.json")
     sel = load(sel_path) if os.path.exists(sel_path) else {"entries": {}, "chosen": chosen}
     if os.path.exists(os.path.join(args.run_dir, "test_metrics.json")):
@@ -333,10 +335,10 @@ def stage_b(args, ctx: Ctx, log=print) -> dict:
     manifest = {"pool_subjects": sorted(set(ctx.data.subjects[ctx.data.pool_idx].tolist())),
                 "val_subjects": sorted(set(ctx.data.subjects[ctx.data.val_idx].tolist())),
                 "pool_ids": ctx.data.pool_idx.tolist(), "val_ids": ctx.data.val_idx.tolist(),
-                "chain_ids": ctx.data.chains.tolist(), "block_len": 4, "subsets": {}}
+                "chain_ids": ctx.data.chains.tolist(), "block_len": ctx.data.block_len, "subsets": {}}
     aug_cfg = AugConfig.named(chosen["ssl"]["aug"])
     for seed in args.seeds:
-        ssl_state, ssl_meta = ssl_encoder(ctx, args.run_dir, seed, chosen["ssl"]["tau"], chosen["ssl"]["aug"],
+        ssl_state, ssl_meta = ssl_encoder(ctx, args.ssl_cache, seed, chosen["ssl"]["tau"], chosen["ssl"]["aug"],
                                           args.ssl_epochs, log)
         rand_state = recalibrated_random_encoder(ctx, seed)
         for b in args.budgets:
@@ -394,7 +396,7 @@ def evaluate_test(args, device, log=print) -> dict:
     if os.path.exists(out_path):
         raise RuntimeError(f"{out_path} exists: the test set was already evaluated for this run")
     sel = load(os.path.join(args.run_dir, "selections.json"))
-    data = StudyData(args.data_dir)                    # standardizer and kNN references: pool only
+    data = StudyData(args.data_dir)                    # block_len irrelevant here; standardizer and kNN references: pool only
     Xte, yte, ste = load_test(args.data_dir)
     mean = torch.tensor(data.scaler.mean.reshape(-1), device=device)
     std = torch.tensor(data.scaler.std.reshape(-1), device=device)
@@ -513,6 +515,10 @@ def parse_args(argv=None):
     p.add_argument("--ssl-epochs", type=int, default=200)
     p.add_argument("--steps", type=int, default=1400)
     p.add_argument("--cpu", action="store_true")
+    p.add_argument("--block-len", type=int, default=4, help="labeled block length; 1 = i.i.d. windows")
+    p.add_argument("--stage-a", default=None, help="reuse stage-A choices from this file")
+    p.add_argument("--ssl-aug", default=None, help="override the SSL/sup_aug augmentation (ablation)")
+    p.add_argument("--ssl-cache", default=None, help="directory of reusable SSL encoders (default <run-dir>/ssl)")
     return p.parse_args(argv)
 
 
@@ -524,7 +530,8 @@ def main(argv=None):
         return report(args)
     if args.command == "evaluate-test":
         return evaluate_test(args, device)
-    ctx = Ctx(StudyData(args.data_dir), device)
+    args.ssl_cache = args.ssl_cache or os.path.join(args.run_dir, "ssl")
+    ctx = Ctx(StudyData(args.data_dir, block_len=args.block_len), device)
     print(f"device {device} | pool {len(ctx.data.pool_idx)} | val {len(ctx.data.val_idx)}", flush=True)
     return stage_a(args, ctx) if args.command == "stage-a" else stage_b(args, ctx)
 

@@ -165,3 +165,18 @@ is never written to.
 ## Amendments
 
 (none)
+
+### Amendment 1 (2026-10-07, after the MVS report; owner: "keep going")
+
+Runs the expansion from §9 with **no change to methods or stage-A choices** (`mvs/stage_a.json` is reused), and
+reuses the SSL encoders in `mvs/ssl/` (same inputs and checkpoint rule). Each run has its own directory and its own
+one-time test evaluation:
+
+- `budgets_5_25/`: budgets 5 % and 25 %, all conditions. These budgets were predeclared in §2.
+- `iid/`: i.i.d. stratified window sampling (`--block-len 1`) at 1 % and 10 %, all conditions. This is the
+  sensitivity analysis from §2. At 100 % the sampling scheme makes no difference.
+- `ablation_norot/`: the strong augmentation without rotation, for `sup_aug`, `ssl_probe` and `ssl_ft` at 1 / 10 /
+  100 %. This is the ablation named in §9 before any test result was seen. The validation scores are reported next
+  to the test scores.
+
+No further tuning. Results are added to REPORT.md as a separate section, and MVS numbers are not edited.
